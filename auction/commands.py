@@ -2,17 +2,19 @@ import discord
 from discord.ext import commands
 import json
 
+path = '/home/michkied/PloplDlaWOSP/'
+
 
 def update(data):
-    open('auction/data.json', 'w+', encoding='UTF-8').write(json.dumps(data))
-    open('auction/price.txt', 'w+', encoding='UTF-8').write(str(data['price']) + 'zł')
-    open('auction/sum.txt', 'w+', encoding='UTF-8').write(str(data['sum']) + 'zł')
+    open(path+'auction/data.json', 'w+', encoding='UTF-8').write(json.dumps(data))
+    open(path+'auction/price.txt', 'w+', encoding='UTF-8').write(str(data['price']) + 'zł')
+    open(path+'auction/sum.txt', 'w+', encoding='UTF-8').write(str(data['sum']) + 'zł')
 
 
 class Auction(discord.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.data = json.loads(open('auction/data.json', 'r+').read())
+        self.data = json.loads(open(path+'auction/data.json', 'r+').read())
 
     @commands.Cog.listener()
     async def on_message(self, msg):
