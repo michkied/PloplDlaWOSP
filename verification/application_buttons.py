@@ -18,7 +18,8 @@ class VerifyStudentButton(discord.ui.Button):
         user = interaction.user
 
         if unverified_roles[0] in (role.id for role in user.roles):
-            await interaction.response.send_message("", ephemeral=True)
+            await interaction.response.send_message(":x: **Cierpliwości!**\nTwoje zgłoszenie już do nas dotarło i jest w trakcie weryfikacji.", ephemeral=True)
+            return
 
         def check(m):
             return m.author.id == user.id and m.channel == interaction.channel
@@ -64,6 +65,10 @@ class VerifyGraduateButton(discord.ui.Button):
 
     async def callback(self, interaction: discord.Interaction):
         user = interaction.user
+
+        if unverified_roles[0] in (role.id for role in user.roles):
+            await interaction.response.send_message(":x: **Cierpliwości!**\nTwoje zgłoszenie już do nas dotarło i jest w trakcie weryfikacji.", ephemeral=True)
+            return
 
         def check(m):
             return m.author.id == user.id and m.channel == interaction.channel
