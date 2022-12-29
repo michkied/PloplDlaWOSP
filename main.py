@@ -1,14 +1,12 @@
 from datetime import datetime
 import discord
 from discord.ext import commands
-from discord import app_commands
 
 import auction
 import verification
+from config import TOKEN
 
-token = ''
 intents = discord.Intents.all()
-
 bot = commands.Bot(command_prefix='?', intents=intents)
 bot.remove_command('help')
 
@@ -28,4 +26,4 @@ async def on_ready():
 
 
 if __name__ == "__main__":
-    bot.run(token)
+    bot.run(TOKEN)

@@ -1,4 +1,4 @@
-from .config import *
+from ..config import *
 
 from logzero import logger, logfile
 import pathlib

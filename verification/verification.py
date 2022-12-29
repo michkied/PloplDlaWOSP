@@ -1,6 +1,6 @@
 from discord.ext import commands
 from .application_buttons import *
-from .config import *
+from ..config import *
 
 
 class Verification(commands.Cog):

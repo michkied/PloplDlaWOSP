@@ -3,7 +3,7 @@ from logzero import logger, logfile
 from discord.ext import commands
 from discord import app_commands
 import json
-from .config import *
+from ..config import *
 
 path = str(pathlib.Path(__file__).parent.absolute())
 logfile("auction.log")
@@ -31,7 +31,7 @@ class Auction(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, msg):
         if msg.channel.id == auction_channel and msg.author.id != self.bot.user.id:
-            is_moderator = auction_organizator_id in list(map(lambda x: x.id, msg.author.roles))
+            is_moderator = auction_organizer_id in list(map(lambda x: x.id, msg.author.roles))
 
             try:
                 new_price = int(msg.content.lower().replace('zł', '').replace('pln', '').replace('zl', '').replace('!', ''))
@@ -78,7 +78,7 @@ class Auction(commands.Cog):
 
         """Rozpocznij licytację"""
 
-        if auction_organizator_id not in list(map(lambda x: x.id, ctx.user.roles)):
+        if auction_organizer_id not in list(map(lambda x: x.id, ctx.user.roles)):
             await ctx.response.send_message(':x: **Nie masz uprawnień do użycia tej komendy!**')
             logger.warning(f"{ctx.user.display_name} próbował rozpocząć licytację")
             return
@@ -107,7 +107,7 @@ class Auction(commands.Cog):
     async def end(self, ctx):
         """Zakończ licytację"""
 
-        if auction_organizator_id not in list(map(lambda x: x.id, ctx.user.roles)):
+        if auction_organizer_id not in list(map(lambda x: x.id, ctx.user.roles)):
             await ctx.response.send_message(':x: **Nie masz uprawnień do użycia tej komendy!**', ephemeral=True)
             logger.warning(f"{ctx.user.display_name} próbował zakończyć licytację")
             return
