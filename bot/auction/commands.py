@@ -1,5 +1,5 @@
 import pathlib
-from logzero import logger, logfile
+from logzero import logger
 from discord.ext import commands
 from discord import app_commands
 import json
@@ -75,20 +75,18 @@ class Auction(commands.Cog):
     @tree.command(name="start", description="Rozpocznij licytację")
     async def start(self, ctx, name: str, price: int):
 
-        """Rozpocznij licytację"""
-
         if auction_organizer_id not in list(map(lambda x: x.id, ctx.user.roles)):
-            await ctx.response.send_message(':x: **Nie masz uprawnień do użycia tej komendy!**')
+            await ctx.response.send_message(':x: **Nie masz uprawnień do użycia tej komendy!**', ephemeral=True)
             logger.warning(f"{ctx.user.display_name} próbował rozpocząć licytację")
             return
 
         if ctx.channel.id != auction_channel:
-            await ctx.response.send_message(':x: **Używasz komendy na złym kanale!**')
+            await ctx.response.send_message(':x: **Używasz komendy na złym kanale!**', ephemeral=True)
             logger.warning(f"{ctx.user.display_name} próbował rozpocząć licytację na złym kanale")
             return
 
         if self.data['running']:
-            await ctx.response.send_message(':x: **Licytacja już trwa!**')
+            await ctx.response.send_message(':x: **Licytacja już trwa!**', ephemeral=True)
             logger.warning(f"{ctx.user.display_name} próbował rozpocząć licytację gdy inna jeszcze trwała")
             return
 
@@ -104,7 +102,6 @@ class Auction(commands.Cog):
 
     @tree.command(name="end", description="Zakończ licytację")
     async def end(self, ctx):
-        """Zakończ licytację"""
 
         if auction_organizer_id not in list(map(lambda x: x.id, ctx.user.roles)):
             await ctx.response.send_message(':x: **Nie masz uprawnień do użycia tej komendy!**', ephemeral=True)
