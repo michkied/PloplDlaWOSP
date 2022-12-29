@@ -6,7 +6,6 @@ import json
 from ..config import *
 
 path = str(pathlib.Path(__file__).parent.absolute())
-logfile("auction.log")
 
 intents = discord.Intents.default()
 client = discord.Client(intents=intents)

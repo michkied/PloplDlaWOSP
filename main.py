@@ -1,10 +1,15 @@
 from datetime import datetime
 import discord
 from discord.ext import commands
+from logzero import logfile
 
 import bot.auction
 import bot.verification
 from bot.config import TOKEN
+
+# 0 - auction mode
+# 1 - verification mode
+mode = 0
 
 
 class WOSPBot(commands.Bot):
@@ -26,8 +31,12 @@ class WOSPBot(commands.Bot):
         print('by Michał Kiedrzyński\n\n')
         print("REMEMBER TO SEND A NEW POST MESSAGE")
 
-        await self.add_cog(bot.auction.Auction(self))
-        await self.add_cog(bot.verification.Verification(self))
+        if mode:
+            logfile("verification.log", encoding='UTF-8')
+            await self.add_cog(bot.verification.Verification(self))
+        else:
+            logfile("auction.log", encoding='UTF-8')
+            await self.add_cog(bot.auction.Auction(self))
 
 
 WOSPBot()

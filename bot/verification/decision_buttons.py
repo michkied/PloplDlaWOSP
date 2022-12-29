@@ -4,7 +4,6 @@ from logzero import logger, logfile
 import pathlib
 
 path = str(pathlib.Path(__file__).parent.absolute())
-logfile("verification.log")
 
 
 class ApproveButton(discord.ui.Button):
