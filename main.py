@@ -2,28 +2,32 @@ from datetime import datetime
 import discord
 from discord.ext import commands
 
-import auction
-import verification
-from config import TOKEN
-
-intents = discord.Intents.all()
-bot = commands.Bot(command_prefix='?', intents=intents)
-bot.remove_command('help')
+import bot.auction
+import bot.verification
+from bot.config import TOKEN
 
 
-@bot.event
-async def on_ready():
-    date = datetime.now()
-    print(f'We have logged in as {bot.user}')
-    print(bot.user.display_name)
-    print(bot.user.id)
-    print(date.strftime('%d.%m.%Y  %H:%M'))
-    print('by Michał Kiedrzyński\n\n')
-    print("REMEMBER TO SEND A NEW POST MESSAGE")
+class WOSPBot(commands.Bot):
+    def __init__(self):
+        super().__init__(
+            command_prefix=commands.when_mentioned_or('?'),
+            intents=discord.Intents.all()
+        )
 
-    await bot.add_cog(auction.Auction(bot))
-    await bot.add_cog(verification.Verification(bot))
+        self.remove_command('help')
+        self.run(TOKEN)
+
+    async def on_ready(self):
+        date = datetime.now()
+        print(f'We have logged in as {self.user}')
+        print(self.user.display_name)
+        print(self.user.id)
+        print(date.strftime('%d.%m.%Y  %H:%M'))
+        print('by Michał Kiedrzyński\n\n')
+        print("REMEMBER TO SEND A NEW POST MESSAGE")
+
+        await self.add_cog(bot.auction.Auction(self))
+        await self.add_cog(bot.verification.Verification(self))
 
 
-if __name__ == "__main__":
-    bot.run(TOKEN)
+WOSPBot()
