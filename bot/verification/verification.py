@@ -12,7 +12,7 @@ class Verification(commands.Cog):
         view = discord.ui.View(timeout=None)
         view.add_item(VerifyStudentButton(self.bot))
         view.add_item(VerifyGraduateButton(self.bot))
-        view.add_item(VerifyTeacherButton())
+        view.add_item(VerifyTeacherButton(self.bot))
         self.bot.add_view(view)
 
         guild = self.bot.get_guild(server_id)

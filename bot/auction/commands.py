@@ -1,15 +1,10 @@
 import pathlib
 from logzero import logger
 from discord.ext import commands
-from discord import app_commands
 import json
 from ..config import *
 
 path = str(pathlib.Path(__file__).parent.absolute())
-
-intents = discord.Intents.default()
-client = discord.Client(intents=intents)
-tree = app_commands.CommandTree(client)
 
 
 def update(data):
@@ -72,8 +67,9 @@ class Auction(commands.Cog):
                 await msg.channel.send(':x: **Aktualnie nie trwa licytacja!**', delete_after=3)
                 logger.warning(f"{msg.author.display_name} próbował licytować gdy nie trwała licytacja")
 
-    @tree.command(name="start", description="Rozpocznij licytację")
+    @commands.slash_command()
     async def start(self, ctx, name: str, price: int):
+        """Rozpocznij licytację"""
 
         if auction_organizer_id not in list(map(lambda x: x.id, ctx.user.roles)):
             await ctx.response.send_message(':x: **Nie masz uprawnień do użycia tej komendy!**', ephemeral=True)
@@ -96,12 +92,13 @@ class Auction(commands.Cog):
         self.data['highest_bidder'] = 0
         self.data['starting_price'] = price
         await self.bot.loop.run_in_executor(None, update, self.data)
-        await ctx.channel.set_permissions(ctx.guild.default_role, overwrite=discord.PermissionOverwrite(send_messages=True, read_messages=True))
+        # await ctx.channel.set_permissions(ctx.guild.default_role, overwrite=discord.PermissionOverwrite(send_messages=True, read_messages=True))
         await ctx.response.send_message(f':moneybag: **Licytacja `{name}` rozpoczęła się!**\nCena wywoławcza: `{price} zł`')
         logger.info("Start licytacji: *"+ name + "* Cena:" + str(price))
 
-    @tree.command(name="end", description="Zakończ licytację")
+    @commands.slash_command()
     async def end(self, ctx):
+        """Zakończ licytację"""
 
         if auction_organizer_id not in list(map(lambda x: x.id, ctx.user.roles)):
             await ctx.response.send_message(':x: **Nie masz uprawnień do użycia tej komendy!**', ephemeral=True)
@@ -120,7 +117,7 @@ class Auction(commands.Cog):
 
         self.data['running'] = False
         await self.bot.loop.run_in_executor(None, update, self.data)
-        await ctx.channel.set_permissions(ctx.guild.default_role, overwrite=discord.PermissionOverwrite(send_messages=False, read_messages=True))
+        # await ctx.channel.set_permissions(ctx.guild.default_role, overwrite=discord.PermissionOverwrite(send_messages=False, read_messages=True))
         if self.data['highest_bidder'] != 0:
             await ctx.response.send_message(f"▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n\n:tada: **Licytacja zakończyła się!** :tada:\n"
                                             f"{ctx.guild.get_member(self.data['highest_bidder']).mention} "
