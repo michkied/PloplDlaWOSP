@@ -5,12 +5,13 @@ from .application_modals import *
 class VerifyStudentButton(ui.Button):
     def __init__(self, bot):
         self.bot = bot
-        super().__init__(label="🎒 Uczeń", style=discord.enums.ButtonStyle.blurple, custom_id="0")
+        super().__init__(label="🎒 Uczeń", style=discord.enums.ButtonStyle.blurple, custom_id="STU_BUTTON")
 
     async def callback(self, interaction: discord.Interaction):
         user = interaction.user
 
-        if unverified_roles[0] in (role.id for role in user.roles) or unverified_roles[1] in (role.id for role in user.roles):
+        role_ids = map(lambda role: role.id, user.roles)
+        if unverified_roles[0] in role_ids or unverified_roles[1] in role_ids:
             await interaction.response.send_message(
                 ":x: **Cierpliwości!**\nTwoje zgłoszenie już do nas dotarło i jest w trakcie weryfikacji.",
                 ephemeral=True
@@ -49,12 +50,13 @@ class VerifyStudentButton(ui.Button):
 class VerifyGraduateButton(ui.Button):
     def __init__(self, bot):
         self.bot = bot
-        super().__init__(label="🎓 Absolwent", style=discord.enums.ButtonStyle.blurple, custom_id="2")
+        super().__init__(label="🎓 Absolwent", style=discord.enums.ButtonStyle.blurple, custom_id="GRD_BUTTON")
 
     async def callback(self, interaction: discord.Interaction):
         user = interaction.user
 
-        if unverified_roles[0] in (role.id for role in user.roles) or unverified_roles[1] in (role.id for role in user.roles):
+        role_ids = map(lambda role: role.id, user.roles)
+        if unverified_roles[0] in role_ids or unverified_roles[1] in role_ids:
             await interaction.response.send_message(":x: **Cierpliwości!**\nTwoje zgłoszenie już do nas dotarło i jest w trakcie weryfikacji.", ephemeral=True)
             return
 
@@ -85,7 +87,7 @@ class VerifyGraduateButton(ui.Button):
 class VerifyTeacherButton(ui.Button):
     def __init__(self, bot):
         self.bot = bot
-        super().__init__(label="🧑‍🏫 Nauczyciel", style=discord.enums.ButtonStyle.blurple, custom_id="1")
+        super().__init__(label="🧑‍🏫 Nauczyciel", style=discord.enums.ButtonStyle.blurple, custom_id="TCH_BUTTON")
 
     async def callback(self, interaction: discord.Interaction):
         user = interaction.user
@@ -95,7 +97,9 @@ class VerifyTeacherButton(ui.Button):
             logger.info(f"Nauczyciel: {user.display_name} znaleziony na liście ID")
             await user.add_roles(guild.get_role(verified_roles[2]))
             await interaction.response.send_message(":white_check_mark: **Weryfikacja przebiegła pomyślnie!**", ephemeral=True)
-            await guild.get_channel(applications_channel).send(f':white_check_mark::teacher: **Użytkownik {user.mention} zweryfikował się jako nauczyciel** (lista ID)')
+            await guild.get_channel(applications_channel).send(
+                f':white_check_mark::teacher: **Użytkownik {user.mention} zweryfikował się jako nauczyciel** (lista ID)'
+            )
             return
 
         modal = TeacherVerificationModal()
@@ -117,7 +121,7 @@ class VerifyTeacherButton(ui.Button):
             await self.bot.get_channel(applications_channel).send(embed=embed)
             return
 
-        # await user.edit(nick=name)
+        await user.edit(nick=name)
         logger.info(f"Nauczyciel: {user.display_name} zweryfikowany przy pomocy kodu")
         await user.add_roles(guild.get_role(verified_roles[2]))
         await guild.get_channel(applications_channel).send(

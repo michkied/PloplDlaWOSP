@@ -36,7 +36,7 @@ class Verification(commands.Cog):
         view.add_item(VerifyGraduateButton(self.bot))
         view.add_item(VerifyTeacherButton(self.bot))
 
-        text = '**Witaj w systemie weryfikacji uczestników Debaty 2022-2023\n\n' \
+        text = '**Witaj w systemie weryfikacji uczestników VI Wielkiej Licytacji PLOPŁ dla WOŚP!\n\n' \
                'Aby się zweryfikować, wybierz swoją kategorię wciskając odpowiedni przycisk:**'
         embed = discord.Embed(description=text, colour=0x001437)
         # embed.set_image(url='https://i.imgur.com/NeJeNAV.png')

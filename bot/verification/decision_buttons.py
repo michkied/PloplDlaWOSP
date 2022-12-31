@@ -1,9 +1,6 @@
 from ..config import *
 
-from logzero import logger, logfile
-import pathlib
-
-path = str(pathlib.Path(__file__).parent.absolute())
+from logzero import logger
 
 
 class ApproveButton(discord.ui.Button):
