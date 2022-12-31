@@ -3,6 +3,7 @@ import asyncio
 import time
 
 TOKEN = ''
+TEACHER_KEY = ''
 
 # General config
 bot_id = 0
