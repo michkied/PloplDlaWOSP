@@ -43,9 +43,3 @@ class Verification(commands.Cog):
 
         await ctx.send(embed=embed, view=view)
         logger.info("Wiadomość Post wysłana")
-
-    @commands.Cog.listener()
-    async def on_message(self, msg):
-        if "?post" not in msg.content.lower() and msg.channel.id == only_verification_channel and \
-                msg.author.id != self.bot.user.id:
-            await msg.delete()
