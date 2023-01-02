@@ -159,6 +159,20 @@ class Auction(commands.Cog):
                          int, "Cena, do której cofnąć licytację",
                          name="cena", autocomplete=get_prices
                      )):
+        if auction_organizer_id not in list(map(lambda x: x.id, ctx.user.roles)):
+            await ctx.response.send_message(':x: **Nie masz uprawnień do użycia tej komendy!**', ephemeral=True)
+            logger.warning(f"{ctx.user.display_name} próbował cofnąć licytację")
+            return
+
+        if ctx.channel.id != auction_channel:
+            await ctx.response.send_message(':x: **Używasz komendy na złym kanale!**', ephemeral=True)
+            logger.warning(f"{ctx.user.display_name} próbował cofnąć licytację na złym kanale")
+            return
+
+        if not self.data['running']:
+            await ctx.response.send_message(':x: **Nie trwa żadna licytacja!**', ephemeral=True)
+            logger.warning(f"{ctx.user.display_name} próbował cofnąć licytację gdy żadna nie trwała")
+            return
 
         to_del = []
         for bid in self.history:
