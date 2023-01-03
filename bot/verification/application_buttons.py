@@ -21,11 +21,11 @@ class VerifyStudentButton(ui.Button):
         modal = StudentVerificationModal()
         await interaction.response.send_modal(modal)
         await modal.wait()
-        username = f'{modal.children[0].value} {modal.children[1].value.upper()}'
+        name = f'{modal.children[0].value} {modal.children[1].value.upper()}'
 
-        logger.info(f"Uczeń: {user.display_name} Podany nick: {username}")
+        logger.info(f"Uczeń: {user.display_name} Podany nick: {name}")
 
-        await user.edit(nick=username)
+        await user.edit(nick=name)
 
         if user.id not in STUDENT_DATA:
             other_guilds = ':warning: **Użytkownika nie ma na żadnym serwerze klasowym**'
@@ -35,7 +35,7 @@ class VerifyStudentButton(ui.Button):
                 other_guilds += f'{guild["guild"]}  -  {guild["nick"]}\n'
 
         text = f'**Uczeń - {user.mention}**\n' \
-               f'`Podane dane` - {username}\n\n' \
+               f'`Podane dane` - {name}\n\n' \
                f'{other_guilds}'
         embed = discord.Embed(description=text, color=discord.Color.blurple())
 
@@ -80,6 +80,7 @@ class VerifyGraduateButton(ui.Button):
         view.add_item(ApproveButton(self.bot, user.id, 1))
         view.add_item(DenyButton(self.bot, user.id, 1))
 
+        await user.edit(nick=name)
         await self.bot.get_channel(VERIFICATION_CHANNEL).send(embed=embed, view=view)
         await user.add_roles(interaction.guild.get_role(UNVERIFIED_ROLES[1]))
 
