@@ -21,7 +21,7 @@ class Auction(commands.Cog):
 
     def clear_history(self):
         self.history = {}
-        with open(path + r"\\history.json", "w+") as f:
+        with open(path + r"\\history.json", "w+", encoding="UTF-8") as f:
             f.write('{}')
 
     def update_files(self, data):
