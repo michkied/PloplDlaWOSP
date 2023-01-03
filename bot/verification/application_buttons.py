@@ -11,7 +11,7 @@ class VerifyStudentButton(ui.Button):
         user = interaction.user
 
         role_ids = map(lambda role: role.id, user.roles)
-        if unverified_roles[0] in role_ids or unverified_roles[1] in role_ids:
+        if UNVERIFIED_ROLES[0] in role_ids or UNVERIFIED_ROLES[1] in role_ids:
             await interaction.response.send_message(
                 ":x: **Cierpliwości!**\nTwoje zgłoszenie już do nas dotarło i jest w trakcie weryfikacji.",
                 ephemeral=True
@@ -27,11 +27,11 @@ class VerifyStudentButton(ui.Button):
 
         await user.edit(nick=username)
 
-        if user.id not in users_data:
+        if user.id not in STUDENT_DATA:
             other_guilds = ':warning: **Użytkownika nie ma na żadnym serwerze klasowym**'
         else:
             other_guilds = '`Na innych serwerach:`\n'
-            for guild in users_data[user.id]:
+            for guild in STUDENT_DATA[user.id]:
                 other_guilds += f'{guild["guild"]}  -  {guild["nick"]}\n'
 
         text = f'**Uczeń - {user.mention}**\n' \
@@ -43,8 +43,8 @@ class VerifyStudentButton(ui.Button):
         view.add_item(ApproveButton(self.bot, user.id, 0))
         view.add_item(DenyButton(self.bot, user.id, 0))
 
-        await self.bot.get_channel(applications_channel).send(embed=embed, view=view)
-        await user.add_roles(interaction.guild.get_role(unverified_roles[0]))
+        await self.bot.get_channel(VERIFICATION_CHANNEL).send(embed=embed, view=view)
+        await user.add_roles(interaction.guild.get_role(UNVERIFIED_ROLES[0]))
 
 
 class VerifyGraduateButton(ui.Button):
@@ -56,7 +56,7 @@ class VerifyGraduateButton(ui.Button):
         user = interaction.user
 
         role_ids = map(lambda role: role.id, user.roles)
-        if unverified_roles[0] in role_ids or unverified_roles[1] in role_ids:
+        if UNVERIFIED_ROLES[0] in role_ids or UNVERIFIED_ROLES[1] in role_ids:
             await interaction.response.send_message(":x: **Cierpliwości!**\nTwoje zgłoszenie już do nas dotarło i jest w trakcie weryfikacji.", ephemeral=True)
             return
 
@@ -80,8 +80,8 @@ class VerifyGraduateButton(ui.Button):
         view.add_item(ApproveButton(self.bot, user.id, 1))
         view.add_item(DenyButton(self.bot, user.id, 1))
 
-        await self.bot.get_channel(applications_channel).send(embed=embed, view=view)
-        await user.add_roles(interaction.guild.get_role(unverified_roles[1]))
+        await self.bot.get_channel(VERIFICATION_CHANNEL).send(embed=embed, view=view)
+        await user.add_roles(interaction.guild.get_role(UNVERIFIED_ROLES[1]))
 
 
 class VerifyTeacherButton(ui.Button):
@@ -93,11 +93,11 @@ class VerifyTeacherButton(ui.Button):
         user = interaction.user
         guild = interaction.guild
 
-        if user.id in teachers:
+        if user.id in TEACHERS:
             logger.info(f"Nauczyciel: {user.display_name} znaleziony na liście ID")
-            await user.add_roles(guild.get_role(verified_roles[2]))
+            await user.add_roles(guild.get_role(VERIFIED_ROLES[2]))
             await interaction.response.send_message(":white_check_mark: **Weryfikacja przebiegła pomyślnie!**", ephemeral=True)
-            await guild.get_channel(applications_channel).send(
+            await guild.get_channel(VERIFICATION_CHANNEL).send(
                 f':white_check_mark::teacher: **Użytkownik {user.mention} zweryfikował się jako nauczyciel** (lista ID)'
             )
             return
@@ -118,12 +118,12 @@ class VerifyTeacherButton(ui.Button):
                    f"Data dołączenia do serwera: <t:{int(user.joined_at.timestamp())}:F>"
 
             embed = discord.Embed(description=text, color=discord.Color.red())
-            await self.bot.get_channel(applications_channel).send(embed=embed)
+            await self.bot.get_channel(VERIFICATION_CHANNEL).send(embed=embed)
             return
 
         await user.edit(nick=name)
         logger.info(f"Nauczyciel: {user.display_name} zweryfikowany przy pomocy kodu")
-        await user.add_roles(guild.get_role(verified_roles[2]))
-        await guild.get_channel(applications_channel).send(
+        await user.add_roles(guild.get_role(VERIFIED_ROLES[2]))
+        await guild.get_channel(VERIFICATION_CHANNEL).send(
             f':white_check_mark::teacher: **Użytkownik {user.mention} zweryfikował się jako nauczyciel** (kod dostępu)'
         )

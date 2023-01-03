@@ -4,34 +4,33 @@ import time
 
 TOKEN = ''
 TEACHER_KEY = ''
+VERIFICATION_IMAGE_URL = ''
 
 # General config
-bot_id = 0
-server_id = 0
-mod_role_id = 0
+AUCTION_GUILD = 0
+VERIFIER_ROLE = 0
 
 
 # Verification config
-only_verification_channel = 0
-applications_channel = 0
+VERIFICATION_CHANNEL = 0
 
 
 # Auction config
-auction_organizer_id = 0
-auction_channel = 0
-log_channel = 0
+ORGANIZER_ROLE = 0
+AUCTION_CHANNEL = 0
+LOG_CHANNEL = 0
 
 
 # Role IDs
 #  0 - Student
 #  1 - Graduate
 #  2 - Teacher
-unverified_roles = [0, 1, 2]
-verified_roles = [0, 1, 2]
+UNVERIFIED_ROLES = [0, 1, 2]
+VERIFIED_ROLES = [0, 1, 2]
 
 
 # List of teacher ids
-teachers = []
+TEACHERS = []
 
 
 # User guilds nickname data
@@ -44,4 +43,4 @@ teachers = []
 #   ]
 # }
 
-users_data = {}
+STUDENT_DATA = {}

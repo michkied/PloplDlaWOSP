@@ -42,8 +42,8 @@ class Auction(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, msg):
-        if msg.channel.id == auction_channel and msg.author.id != self.bot.user.id:
-            is_moderator = auction_organizer_id in list(map(lambda x: x.id, msg.author.roles))
+        if msg.channel.id == AUCTION_CHANNEL and msg.author.id != self.bot.user.id:
+            is_moderator = ORGANIZER_ROLE in list(map(lambda x: x.id, msg.author.roles))
 
             try:
                 new_price = int(msg.content.lower().replace('zł', '').replace('pln', '').replace('zl', '').replace('!', ''))
@@ -55,7 +55,7 @@ class Auction(commands.Cog):
 
             if self.data['running']:
                 if new_price - self.data['price'] > 9000:
-                    await self.bot.get_channel(log_channel).send(f'{msg.author.mention} próbował/a podbić cenę '
+                    await self.bot.get_channel(LOG_CHANNEL).send(f'{msg.author.mention} próbował/a podbić cenę '
                                                                  f'o {new_price - self.data["price"]}')
                     await msg.delete()
                     logger.warning(f"{msg.author.display_name} próbował podbić cenę o {new_price - self.data['price']}")
@@ -95,12 +95,12 @@ class Auction(commands.Cog):
     async def start(self, ctx, name: str, price: int):
         """Rozpocznij licytację"""
 
-        if auction_organizer_id not in list(map(lambda x: x.id, ctx.user.roles)):
+        if ORGANIZER_ROLE not in list(map(lambda x: x.id, ctx.user.roles)):
             await ctx.response.send_message(':x: **Nie masz uprawnień do użycia tej komendy!**', ephemeral=True)
             logger.warning(f"{ctx.user.display_name} próbował rozpocząć licytację")
             return
 
-        if ctx.channel.id != auction_channel:
+        if ctx.channel.id != AUCTION_CHANNEL:
             await ctx.response.send_message(':x: **Używasz komendy na złym kanale!**', ephemeral=True)
             logger.warning(f"{ctx.user.display_name} próbował rozpocząć licytację na złym kanale")
             return
@@ -125,12 +125,12 @@ class Auction(commands.Cog):
     async def end(self, ctx):
         """Zakończ licytację"""
 
-        if auction_organizer_id not in list(map(lambda x: x.id, ctx.user.roles)):
+        if ORGANIZER_ROLE not in list(map(lambda x: x.id, ctx.user.roles)):
             await ctx.response.send_message(':x: **Nie masz uprawnień do użycia tej komendy!**', ephemeral=True)
             logger.warning(f"{ctx.user.display_name} próbował zakończyć licytację")
             return
 
-        if ctx.channel.id != auction_channel:
+        if ctx.channel.id != AUCTION_CHANNEL:
             await ctx.response.send_message(':x: **Używasz komendy na złym kanale!**', ephemeral=True)
             logger.warning(f"{ctx.user.display_name} próbował zakończyć licytację na złym kanale")
             return
@@ -159,12 +159,12 @@ class Auction(commands.Cog):
                          int, "Cena, do której cofnąć licytację",
                          name="cena", autocomplete=get_prices
                      )):
-        if auction_organizer_id not in list(map(lambda x: x.id, ctx.user.roles)):
+        if ORGANIZER_ROLE not in list(map(lambda x: x.id, ctx.user.roles)):
             await ctx.response.send_message(':x: **Nie masz uprawnień do użycia tej komendy!**', ephemeral=True)
             logger.warning(f"{ctx.user.display_name} próbował cofnąć licytację")
             return
 
-        if ctx.channel.id != auction_channel:
+        if ctx.channel.id != AUCTION_CHANNEL:
             await ctx.response.send_message(':x: **Używasz komendy na złym kanale!**', ephemeral=True)
             logger.warning(f"{ctx.user.display_name} próbował cofnąć licytację na złym kanale")
             return

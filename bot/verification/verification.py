@@ -15,10 +15,10 @@ class Verification(commands.Cog):
         view.add_item(VerifyTeacherButton(self.bot))
         self.bot.add_view(view)
 
-        guild = self.bot.get_guild(server_id)
+        guild = self.bot.get_guild(AUCTION_GUILD)
         unverified = {
-            0: guild.get_role(unverified_roles[0]).members,
-            1: guild.get_role(unverified_roles[1]).members
+            0: guild.get_role(UNVERIFIED_ROLES[0]).members,
+            1: guild.get_role(UNVERIFIED_ROLES[1]).members
         }
 
         for user_type in unverified:
@@ -39,7 +39,7 @@ class Verification(commands.Cog):
         text = '**Witaj w systemie weryfikacji uczestników VI Wielkiej Licytacji PLOPŁ dla WOŚP!\n\n' \
                'Aby się zweryfikować, wybierz swoją kategorię wciskając odpowiedni przycisk:**'
         embed = discord.Embed(description=text, colour=0x001437)
-        # embed.set_image(url='https://i.imgur.com/NeJeNAV.png')
+        embed.set_image(url=VERIFICATION_IMAGE_URL)
 
         await ctx.send(embed=embed, view=view)
         logger.info("Wiadomość Post wysłana")
