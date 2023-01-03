@@ -1,35 +1,44 @@
-# PloplDlaWOSP
-#
-# Made with Python 3.9 & ❤love❤ by Michał Kiedrzyński (michkied#6677)
-# 2021 - 2022
-#
-# Gramy do końca świata i jeden dzień dzień dłużej!
-
+from abc import ABC
+from datetime import datetime
 import discord
 from discord.ext import commands
-from datetime import datetime
+from logzero import logfile
 
-import auction
-import verification
+from bot.auction import Auction
+from bot.verification import Verification
+from bot.config import TOKEN
 
-intents = discord.Intents.all()
-bot = commands.Bot(command_prefix='?', intents=intents)
-bot.remove_command('help')
-
-
-@bot.event
-async def on_ready():
-    date = datetime.now()
-    print('Logged in as:')
-    print(bot.user.name)
-    print(bot.user.id)
-    print(date.strftime('%d.%m.%Y  %H:%M'))
-    print('by Michał Kiedrzyński')
-    print('------')
+# 0 - auction mode
+# 1 - verification mode
+mode = 1
 
 
-if __name__ == '__main__':
-    bot.add_cog(auction.Auction(bot))
-    bot.add_cog(verification.Verification(bot))
+class WOSPBot(commands.Bot, ABC):
+    def __init__(self):
+        super().__init__(
+            command_prefix=commands.when_mentioned_or('?'),
+            intents=discord.Intents.all()
+        )
 
-    bot.run('TOKEN', reconnect=True)
+        self.remove_command('help')
+        if mode:
+            logfile("verification.log", encoding='UTF-8')
+            self.add_cog(Verification(self))
+            print('RUNNING IN VERIFICATION MODE')
+        else:
+            logfile("auction.log", encoding='UTF-8')
+            self.add_cog(Auction(self))
+            print('RUNNING IN AUCTION MODE')
+
+        self.run(TOKEN)
+
+    async def on_ready(self):
+        date = datetime.now()
+        print(f'We have logged in as {self.user}')
+        print(self.user.display_name)
+        print(self.user.id)
+        print(date.strftime('%d.%m.%Y  %H:%M'))
+        print('by Michał Kiedrzyński\n\n')
+
+
+WOSPBot()

@@ -1,0 +1,2 @@
+logzero~=1.7.0
+py-cord>=2.0.0
