@@ -21,6 +21,8 @@ class VerifyStudentButton(ui.Button):
         modal = StudentVerificationModal()
         await interaction.response.send_modal(modal)
         await modal.wait()
+        if modal.children[0].value is None:
+            return
         name = f'{modal.children[0].value} {modal.children[1].value.upper()}'
 
         logger.info(f"Uczeń: {user.display_name} Podany nick: {name}")
@@ -64,6 +66,8 @@ class VerifyGraduateButton(ui.Button):
         await interaction.response.send_modal(modal)
         await modal.wait()
         name, year, clss, teacher = list(map(lambda _: _.value, modal.children))
+        if modal.children[0].value is None:
+            return
         clss = clss.upper()
 
         text = f'**Absolwent - {user.mention}**\n' \
@@ -106,6 +110,8 @@ class VerifyTeacherButton(ui.Button):
         modal = TeacherVerificationModal()
         await interaction.response.send_modal(modal)
         await modal.wait()
+        if modal.children[0].value is None:
+            return
         name = modal.children[0].value
         key = modal.children[1].value
 
