@@ -10,7 +10,7 @@ from bot.config import TOKEN
 
 # 0 - verification mode
 # 1 - auction mode
-mode = 1
+mode = 0
 
 
 class WOSPBot(commands.Bot, ABC):
