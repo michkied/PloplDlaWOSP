@@ -18,7 +18,8 @@ class WOSPBot(commands.Bot, ABC):
         super().__init__(
             command_prefix=commands.when_mentioned_or('?'),
             intents=discord.Intents.all(),
-            auto_sync_commands=bool(mode)
+            auto_sync_commands=bool(mode),
+            debug_guilds=[801763888633872384]
         )
 
         self.remove_command('help')
