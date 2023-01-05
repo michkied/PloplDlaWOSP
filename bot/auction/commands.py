@@ -58,15 +58,26 @@ class Auction(commands.Cog):
                     return
 
                 if self.data['highest_bidder']:
+                    diff_err_text = ':x: **Podana przez ciebie cena nie jest wyższa od poprzedniej o co najmniej 2 zł**'
                     diff = 2
                 else:
+                    diff_err_text = ':x: **Podana przez ciebie cena jest niższa od ceny wywoławczej**'
                     diff = 0
+                if self.data['price'] >= 1000:
+                    diff_err_text = ':x: **Podana przez ciebie cena nie jest wyższa od poprzedniej o co najmniej 5 zł**\n' \
+                           ':warning: Po przekroczeniu kwoty 1000 zł mnimalna kwota przebicia wynosi 5 zł'
+                    diff = 5
+
+                diff_info = ''
+                if self.data['price'] < 1000 <= new_price:
+                    diff_info = '\n\n**WOAH! Mamy 1000 złotych!** :partying_face:\n' \
+                                 'Pora wytoczyć ciężkie działa - **od teraz przebijamy o minimum 5 zł!**'
 
                 if new_price < self.data['price'] + diff:
                     await msg.delete()
+                    logger.warning(f"{msg.author.display_name} próbował przebić o {new_price}")
                     try:
-                        await msg.author.send(':x: **Podana przez ciebie cena nie jest wyższa od poprzedniej o co najmniej 2zł**')
-                        logger.warning(f"{msg.author.display_name} próbował przebić o mniej niż 2 zł")
+                        await msg.author.send(diff_err_text)
                     except discord.Forbidden:
                         pass
                     return
@@ -80,7 +91,7 @@ class Auction(commands.Cog):
                 self.data['last_bid_msg'] = f'{msg.author.display_name} podbija do {new_price} zł!'
 
                 await self.bot.loop.run_in_executor(None, self.update_files, self.data)
-                await msg.channel.send(f'**{msg.author.mention} podbija cenę do `{new_price} zł`!**')
+                await msg.channel.send(f'**{msg.author.mention} podbija cenę do `{new_price} zł`!**{diff_info}')
                 logger.info(f'{msg.author.display_name} podbija cenę do {new_price}')
 
             elif not is_moderator:
