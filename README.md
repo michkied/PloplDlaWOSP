@@ -1,8 +1,6 @@
 # PloplDlaWOŚP
 
-[![](https://img.shields.io/badge/python-3.9-blue)](https://www.python.org/downloads/release/python-386/) [![](https://img.shields.io/badge/license-MIT-green)](https://opensource.org/licenses/MIT)
-
-Discord bot that managed IV, V & VI Great PLOPŁ Aution for WOŚP (Polish charity).
+Discord bot that managed IV, V & VI PLOPŁ Aution for WOŚP (Polish charity).
 
 ### Verification
 - In order to participate in the auction, users need to be verified
@@ -14,7 +12,7 @@ Discord bot that managed IV, V & VI Great PLOPŁ Aution for WOŚP (Polish charit
 - Data is stored in data.json file
 - Bot updates the current price and overall sum in price.txt and sum.txt files respectively, which are then read by OBS and displayed on live transmission
   
-**IV, V & VI Great PLOPŁ Aution for WOŚP collected over 33 900 PLN for Wielka Orkiestra Świątecznej Pomocy!**
+**IV, V & VI PLOPŁ Aution for WOŚP collected over 56 000 PLN for Wielka Orkiestra Świątecznej Pomocy!**
 
 ▬▬▬▬▬▬▬▬▬
 
@@ -30,4 +28,4 @@ Bot obsługujący IV, V i VI Wielką Licytację PLOPŁ dla WOŚP.
 - Dane przechowywane są w pliku data.jso w formacie JSON
 - Bot aktualizuje wartości aktualnej ceny i sumy w plikach price.txt i sum.txt, które są następnie odczytywane przez program transmitujący (podczas IV Licytacji był to OBS)
   
-**IV, V i VI Wielka Licytacja PLOPŁ dla WOŚP zebrały ponad 33 900 złotych dla Wielkiej Orkiestry Świątecznej Pomocy!**
+**IV, V i VI Wielka Licytacja PLOPŁ dla WOŚP zebrały ponad 56 000 złotych dla Wielkiej Orkiestry Świątecznej Pomocy!**
