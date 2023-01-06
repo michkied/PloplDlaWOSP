@@ -9,8 +9,8 @@ Discord bot that managed IV, V & VI PLOPŁ Aution for WOŚP (Polish charity).
 
 ### Auction
 - Bidding starts by using the `/start <object> <starting price>` command and ends with `/end`
-- Data is stored in data.json file
-- Bot updates the current price and overall sum in price.txt and sum.txt files respectively, which are then read by OBS and displayed on live transmission
+- Additionally, `/pause` and `/unpause` commands are provided, as well as the `/revert` command for returning to a previous auction state 
+- Bot updates the current state of the auction in the data.json file, which is then read by vMix and displayed on live transmission
   
 **IV, V & VI PLOPŁ Aution for WOŚP collected over 56 000 PLN for Wielka Orkiestra Świątecznej Pomocy!**
 
@@ -25,7 +25,7 @@ Bot obsługujący IV, V i VI Wielką Licytację PLOPŁ dla WOŚP.
 
 ### Licytacja
 - Licytację rozpoczyna się poprzez wpisanie komendy `/start <przedmiot> <cena wyw.>`, a kończy komendą `/end`
-- Dane przechowywane są w pliku data.jso w formacie JSON
-- Bot aktualizuje wartości aktualnej ceny i sumy w plikach price.txt i sum.txt, które są następnie odczytywane przez program transmitujący (podczas IV Licytacji był to OBS)
+- Dostępne są również komendy `/pause` i `/unpause` do wstrzymywania licytacji, a także komenda `/revert` do cofania licytacji do poprzedniego stanu
+- Bot zapisuje aktualny stan licytacji w pliku data.json, który jest następnie odczytywany przez program transmitujący (vMix)
   
 **IV, V i VI Wielka Licytacja PLOPŁ dla WOŚP zebrały ponad 56 000 złotych dla Wielkiej Orkiestry Świątecznej Pomocy!**
