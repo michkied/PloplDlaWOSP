@@ -1,6 +1,6 @@
 # PloplDlaWOŚP
 
-Discord bot that managed IV, V & VI PLOPŁ Aution for WOŚP (Polish charity).
+Discord bot that managed IV, V & VI PLOPŁ Autions for WOŚP (Polish charity).
 
 ### Verification
 - In order to participate in the auction, users need to be verified
@@ -12,7 +12,7 @@ Discord bot that managed IV, V & VI PLOPŁ Aution for WOŚP (Polish charity).
 - Additionally, `/pause` and `/unpause` commands are provided, as well as the `/revert` command for returning to a previous auction state 
 - Bot updates the current state of the auction in the data.json file, which is then read by vMix and displayed on live transmission
   
-**IV, V & VI PLOPŁ Aution for WOŚP collected over 56 000 PLN for Wielka Orkiestra Świątecznej Pomocy!**
+**IV, V & VI PLOPŁ Autions for WOŚP collected over 56 000 PLN for Wielka Orkiestra Świątecznej Pomocy!**
 
 ▬▬▬▬▬▬▬▬▬
 
@@ -28,4 +28,4 @@ Bot obsługujący IV, V i VI Wielką Licytację PLOPŁ dla WOŚP.
 - Dostępne są również komendy `/pause` i `/unpause` do wstrzymywania licytacji, a także komenda `/revert` do cofania licytacji do poprzedniego stanu
 - Bot zapisuje aktualny stan licytacji w pliku data.json, który jest następnie odczytywany przez program transmitujący (vMix)
   
-**IV, V i VI Wielka Licytacja PLOPŁ dla WOŚP zebrały ponad 56 000 złotych dla Wielkiej Orkiestry Świątecznej Pomocy!**
+**IV, V i VI Wielkie Licytacje PLOPŁ dla WOŚP zebrały ponad 56 000 złotych dla Wielkiej Orkiestry Świątecznej Pomocy!**
