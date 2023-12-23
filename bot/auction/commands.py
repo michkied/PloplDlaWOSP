@@ -38,66 +38,70 @@ class Auction(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, msg):
-        if msg.channel.id == AUCTION_CHANNEL and msg.author.id != self.bot.user.id:
-            is_moderator = ORGANIZER_ROLE in list(map(lambda x: x.id, msg.author.roles))
+        if msg.channel.id != AUCTION_CHANNEL or msg.author.id == self.bot.user.id:
+            return
 
-            try:
-                new_price = int(msg.content.lower().replace('zł', '').replace('pln', '').replace('zl', '').replace('!', ''))
-            except (ValueError, TypeError):
-                if not is_moderator:
-                    await msg.delete()
-                    logger.warning(f"{msg.author.display_name} napisał {msg.content}")
-                return
+        is_moderator = ORGANIZER_ROLE in list(map(lambda x: x.id, msg.author.roles))
 
-            if self.data['running']:
-                if new_price - self.data['price'] > 9000:
-                    await self.bot.get_channel(LOG_CHANNEL).send(f'{msg.author.mention} próbował/a podbić cenę '
-                                                                 f'o {new_price - self.data["price"]}')
-                    await msg.delete()
-                    logger.warning(f"{msg.author.display_name} próbował podbić cenę o {new_price - self.data['price']}")
-                    return
-
-                if self.data['highest_bidder']:
-                    diff_err_text = ':x: **Podana przez ciebie cena nie jest wyższa od poprzedniej o co najmniej 2 zł**'
-                    diff = 2
-                else:
-                    diff_err_text = ':x: **Podana przez ciebie cena jest niższa od ceny wywoławczej**'
-                    diff = 0
-                if self.data['price'] >= 1000:
-                    diff_err_text = ':x: **Podana przez ciebie cena nie jest wyższa od poprzedniej o co najmniej 5 zł**\n' \
-                           ':warning: Po przekroczeniu kwoty 1000 zł mnimalna kwota przebicia wynosi 5 zł'
-                    diff = 5
-
-                diff_info = ''
-                if self.data['price'] < 1000 <= new_price:
-                    diff_info = '\n\n**WOAH! Mamy 1000 złotych!** :partying_face:\n' \
-                                 'Pora wytoczyć ciężkie działa - **od teraz przebijamy o minimum 5 zł!**'
-
-                if new_price < self.data['price'] + diff:
-                    await msg.delete()
-                    logger.warning(f"{msg.author.display_name} próbował przebić o {new_price}")
-                    try:
-                        await msg.author.send(diff_err_text)
-                    except discord.Forbidden:
-                        pass
-                    return
-
-                if self.data['price'] != self.data['starting_price']:
-                    self.data['sum'] = self.data['sum'] - self.data['price'] + new_price
-                else:
-                    self.data['sum'] = self.data['sum'] + new_price
-                self.data['price'] = new_price
-                self.data['highest_bidder'] = msg.author.id
-                self.data['last_bid_msg'] = f'{msg.author.display_name} podbija do {new_price} zł!'
-
-                await self.bot.loop.run_in_executor(None, self.update_files, self.data)
-                await msg.channel.send(f'**{msg.author.mention} podbija cenę do `{new_price} zł`!**{diff_info}')
-                logger.info(f'{msg.author.display_name} podbija cenę do {new_price}')
-
-            elif not is_moderator:
+        try:
+            new_price = int(msg.content.lower().replace('zł', '').replace('pln', '').replace('zl', '').replace('!', ''))
+        except (ValueError, TypeError):
+            if not is_moderator:
                 await msg.delete()
-                await msg.channel.send(':x: **Aktualnie nie trwa licytacja!**', delete_after=3)
-                logger.warning(f"{msg.author.display_name} próbował licytować gdy nie trwała licytacja")
+                logger.warning(f"{msg.author.display_name} napisał {msg.content}")
+            return
+
+        if not self.data['running']:
+            if is_moderator:
+                return
+            await msg.delete()
+            await msg.channel.send(':x: **Aktualnie nie trwa licytacja!**', delete_after=3)
+            logger.warning(f"{msg.author.display_name} próbował licytować gdy nie trwała licytacja")
+            return
+
+        if new_price - self.data['price'] > 9000:
+            await self.bot.get_channel(LOG_CHANNEL).send(f'{msg.author.mention} próbował/a podbić cenę '
+                                                         f'o {new_price - self.data["price"]}')
+            await msg.delete()
+            logger.warning(f"{msg.author.display_name} próbował podbić cenę o {new_price - self.data['price']}")
+            return
+
+        if self.data['highest_bidder']:
+            diff_err_text = ':x: **Podana przez ciebie cena nie jest wyższa od poprzedniej o co najmniej 2 zł**'
+            diff = 2
+        else:
+            diff_err_text = ':x: **Podana przez ciebie cena jest niższa od ceny wywoławczej**'
+            diff = 0
+        if self.data['price'] >= 1000:
+            diff_err_text = ':x: **Podana przez ciebie cena nie jest wyższa od poprzedniej o co najmniej 5 zł**\n' \
+                   ':warning: Po przekroczeniu kwoty 1000 zł mnimalna kwota przebicia wynosi 5 zł'
+            diff = 5
+
+        diff_info = ''
+        if self.data['price'] < 1000 <= new_price:
+            diff_info = '\n\n**WOAH! Mamy 1000 złotych!** :partying_face:\n' \
+                         'Pora wytoczyć ciężkie działa - **od teraz przebijamy o minimum 5 zł!**'
+
+        if new_price < self.data['price'] + diff:
+            await msg.delete()
+            logger.warning(f"{msg.author.display_name} próbował przebić o {new_price}")
+            try:
+                await msg.author.send(diff_err_text)
+            except discord.Forbidden:
+                pass
+            return
+
+        if self.data['price'] != self.data['starting_price']:
+            self.data['sum'] = self.data['sum'] - self.data['price'] + new_price
+        else:
+            self.data['sum'] = self.data['sum'] + new_price
+        self.data['price'] = new_price
+        self.data['highest_bidder'] = msg.author.id
+        self.data['last_bid_msg'] = f'{msg.author.display_name} podbija do {new_price} zł!'
+
+        await self.bot.loop.run_in_executor(None, self.update_files, self.data)
+        await msg.channel.send(f'**{msg.author.mention} podbija cenę do `{new_price} zł`!**{diff_info}')
+        logger.info(f'{msg.author.display_name} podbija cenę do {new_price}')
 
     @commands.slash_command()
     async def start(self, ctx, name: str, price: int):
