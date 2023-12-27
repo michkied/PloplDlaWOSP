@@ -176,7 +176,7 @@ class Auction(commands.Cog):
         await self.bot.loop.run_in_executor(None, self.update_files, self.data)
 
     @commands.slash_command()
-    async def pause(self, ctx):
+    async def pause(self, ctx, channel : discord.TextChannel=None):
         if ORGANIZER_ROLE not in list(map(lambda x: x.id, ctx.user.roles)):
             await ctx.response.send_message(':x: **Nie masz uprawnień do użycia tej komendy!**', ephemeral=True)
             logger.warning(f"{ctx.user.display_name} próbował wstrzymać licytację")
@@ -195,8 +195,13 @@ class Auction(commands.Cog):
         # await ctx.channel.set_permissions(ctx.guild.default_role, overwrite=discord.PermissionOverwrite(send_messages=False))
         await ctx.response.send_message(f":warning: **Licytacja wstrzymana!**")
 
+        channel = channel or ctx.channel
+        overwrite = channel.overwrites_for(ctx.guild.default_role)
+        overwrite.send_messages = False
+        await channel.set_permissions(ctx.guild.default_role, overwrite=overwrite)
+
     @commands.slash_command()
-    async def unpause(self, ctx):
+    async def unpause(self, ctx, channel : discord.TextChannel=None):
         if ORGANIZER_ROLE not in list(map(lambda x: x.id, ctx.user.roles)):
             await ctx.response.send_message(':x: **Nie masz uprawnień do użycia tej komendy!**', ephemeral=True)
             logger.warning(f"{ctx.user.display_name} próbował wznowić licytację")
@@ -214,6 +219,11 @@ class Auction(commands.Cog):
 
         # await ctx.channel.set_permissions(ctx.guild.default_role, overwrite=discord.PermissionOverwrite(send_messages=True))
         await ctx.response.send_message(f":tada: **Licytacja wznowiona!**")
+
+        channel = channel or ctx.channel
+        overwrite = channel.overwrites_for(ctx.guild.default_role)
+        overwrite.send_messages = True
+        await channel.set_permissions(ctx.guild.default_role, overwrite=overwrite)
 
     @commands.slash_command()
     async def revert(self, ctx,
