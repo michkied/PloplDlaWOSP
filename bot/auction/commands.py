@@ -153,27 +153,50 @@ class Auction(commands.Cog):
             logger.warning(f"{ctx.user.display_name} próbował zakończyć licytację gdy żadna nie trwała")
             return
 
-        self.data['running'] = False
-        # await ctx.channel.set_permissions(ctx.guild.default_role, overwrite=discord.PermissionOverwrite(send_messages=False))
-        if self.data['highest_bidder'] != 0:
-            highest_bidder = ctx.guild.get_member(self.data['highest_bidder'])
-            await ctx.response.send_message(f"▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n\n:tada: **Licytacja zakończyła się!** :tada:\n"
-                                            f"{highest_bidder.mention} "
-                                            f"kupił(a) `{self.data['name']}` za `{self.data['price']} zł`!")
-            self.data['last_bid_msg'] = f"Sprzedane za {self.data['price']} zł!"
-            logger.info(f"Licytacja zakończyła się: {highest_bidder.display_name} "
-                        f"kupił {self.data['name']} za {self.data['price']}")
-        else:
-            await ctx.response.send_message(f"▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n\n**Licytacja zakończyła się!**\nNikt nie wylicytował przedmiotu")
-            self.data['last_bid_msg'] = 'Licytacja zakończona! Nikt nie wylicytował przedmiotu'
-            logger.info("Licytacja zakończyła się, nikt nie wylicytował przedmiotu")
 
-        await self.bot.loop.run_in_executor(None, self.update_files, self.data)
-        await asyncio.sleep(20)
-        self.data['last_bid_msg'] = ''
-        self.data['name'] = ''
-        self.data['price'] = 0
-        await self.bot.loop.run_in_executor(None, self.update_files, self.data)
+
+        try:
+            secondint = 20
+            message = await ctx.send("**Do końca licytacji zostało 20 sekund!**")
+            while True:
+                secondint -= 1
+                if secondint == 15:
+                    await message.edit(content=f"**Do końca licytacji zostało 15 sekund!**")
+                if secondint == 10:
+                    await message.edit(content=f"**Do końca zostało 10 sekund!**")
+                if 5 <= secondint <= 10:
+                    await message.edit(content=f"**Do końca zostało {secondint} sekund!**")
+                if 2 <= secondint <= 4:
+                    await message.edit(content=f"**Do końca zostały {secondint} sekundy!**")
+                if secondint == 0:
+                    await message.edit(content="Ended!")
+                    break
+
+                await asyncio.sleep(1)
+            self.data['running'] = False
+            # await ctx.channel.set_permissions(ctx.guild.default_role, overwrite=discord.PermissionOverwrite(send_messages=False))
+            if self.data['highest_bidder'] != 0:
+                highest_bidder = ctx.guild.get_member(self.data['highest_bidder'])
+                await ctx.response.send_message(f"▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n\n:tada: **Licytacja zakończyła się!** :tada:\n"
+                                                f"{highest_bidder.mention} "
+                                                f"kupił(a) `{self.data['name']}` za `{self.data['price']} zł`!")
+                self.data['last_bid_msg'] = f"Sprzedane za {self.data['price']} zł!"
+                logger.info(f"Licytacja zakończyła się: {highest_bidder.display_name} "
+                            f"kupił {self.data['name']} za {self.data['price']}")
+            else:
+                await ctx.response.send_message(
+                    f"▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n\n**Licytacja zakończyła się!**\nNikt nie wylicytował przedmiotu")
+                self.data['last_bid_msg'] = 'Licytacja zakończona! Nikt nie wylicytował przedmiotu'
+                logger.info("Licytacja zakończyła się, nikt nie wylicytował przedmiotu")
+
+            await self.bot.loop.run_in_executor(None, self.update_files, self.data)
+            await asyncio.sleep(20)
+            self.data['last_bid_msg'] = ''
+            self.data['name'] = ''
+            self.data['price'] = 0
+            await self.bot.loop.run_in_executor(None, self.update_files, self.data)
+        except ValueError:
+            await ctx.send("Must be a number!")
 
     @commands.slash_command()
     async def pause(self, ctx, channel : discord.TextChannel=None):
