@@ -10,6 +10,7 @@ path = str(pathlib.Path(__file__).parent.absolute())
 class Auction(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.stop_timer = False
         with open(path + '\\data.json', 'r+', encoding="UTF-8") as f:
             self.data = json.loads(f.read())[0]
         with open(path + '\\history.json', 'r+', encoding="UTF-8") as f:
@@ -37,7 +38,8 @@ class Auction(commands.Cog):
             f.write(json.dumps(self.history, indent=4))
 
     @commands.Cog.listener()
-    async def on_message(self, msg):
+    async def on_message(self, msg,):
+
         if msg.channel.id != AUCTION_CHANNEL or msg.author.id == self.bot.user.id:
             return
 
@@ -98,6 +100,7 @@ class Auction(commands.Cog):
         self.data['price'] = new_price
         self.data['highest_bidder'] = msg.author.id
         self.data['last_bid_msg'] = f'{msg.author.display_name} podbija do {new_price} zł!'
+        self.stop_timer = True
 
         await self.bot.loop.run_in_executor(None, self.update_files, self.data)
         await msg.channel.send(f'**{msg.author.mention} podbija cenę do `{new_price} zł`!**{diff_info}')
@@ -157,34 +160,40 @@ class Auction(commands.Cog):
 
         try:
             secondint = 20
-            message = await ctx.send("**Do końca licytacji zostało 20 sekund!**")
+            message = await ctx.response.send_message("**Do końca licytacji zostało 20 sekund!**")
+            self.stop_timer = False
             while True:
                 secondint -= 1
+
                 if secondint == 15:
-                    await message.edit(content=f"**Do końca licytacji zostało 15 sekund!**")
+                    await ctx.interaction.edit_original_message(content=f"**Do końca licytacji zostało 15 sekund!**")
                 if secondint == 10:
-                    await message.edit(content=f"**Do końca zostało 10 sekund!**")
+                    await ctx.interaction.edit_original_message(content=f"**Do końca zostało 10 sekund!**")
                 if 5 <= secondint <= 10:
-                    await message.edit(content=f"**Do końca zostało {secondint} sekund!**")
+                    await ctx.interaction.edit_original_message(content=f"**Do końca zostało {secondint} sekund!**")
                 if 2 <= secondint <= 4:
-                    await message.edit(content=f"**Do końca zostały {secondint} sekundy!**")
+                    await ctx.interaction.edit_original_message(content=f"**Do końca zostały {secondint} sekundy!**")
                 if secondint == 0:
-                    await message.edit(content="Ended!")
                     break
+                if self.stop_timer == True:
+                    await ctx.interaction.edit_original_message(content=f"**Licytacja nadal trwa!**")
+                    await asyncio.sleep(3)
+                    await ctx.interaction.delete_original_message()
+                    return
 
                 await asyncio.sleep(1)
             self.data['running'] = False
             # await ctx.channel.set_permissions(ctx.guild.default_role, overwrite=discord.PermissionOverwrite(send_messages=False))
             if self.data['highest_bidder'] != 0:
                 highest_bidder = ctx.guild.get_member(self.data['highest_bidder'])
-                await ctx.response.send_message(f"▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n\n:tada: **Licytacja zakończyła się!** :tada:\n"
+                await ctx.interaction.edit_original_message(content=f"▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n\n:tada: **Licytacja zakończyła się!** :tada:\n"
                                                 f"{highest_bidder.mention} "
                                                 f"kupił(a) `{self.data['name']}` za `{self.data['price']} zł`!")
                 self.data['last_bid_msg'] = f"Sprzedane za {self.data['price']} zł!"
                 logger.info(f"Licytacja zakończyła się: {highest_bidder.display_name} "
                             f"kupił {self.data['name']} za {self.data['price']}")
             else:
-                await ctx.response.send_message(
+                await ctx.interaction.edit_original_message(content=
                     f"▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n\n**Licytacja zakończyła się!**\nNikt nie wylicytował przedmiotu")
                 self.data['last_bid_msg'] = 'Licytacja zakończona! Nikt nie wylicytował przedmiotu'
                 logger.info("Licytacja zakończyła się, nikt nie wylicytował przedmiotu")
