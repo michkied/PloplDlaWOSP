@@ -3,8 +3,9 @@ from .application_modals import *
 
 
 class VerifyStudentButton(ui.Button):
-    def __init__(self, bot):
+    def __init__(self, bot, student_keys):
         self.bot = bot
+        self.student_keys = student_keys
         super().__init__(label="🎒 Uczeń", style=discord.enums.ButtonStyle.blurple, custom_id="STU_BUTTON")
 
     async def callback(self, interaction: discord.Interaction):
@@ -18,28 +19,56 @@ class VerifyStudentButton(ui.Button):
             )
             return
 
-        modal = StudentVerificationModal()
+        modal = StudentVerificationModal(self.student_keys)
         await interaction.response.send_modal(modal)
         await modal.wait()
         if modal.children[0].value is None:
             return
-        name = f'{modal.children[0].value} {modal.children[1].value.upper()}'
+        name, clss, key = list(map(lambda _: _.value, modal.children))
+        key = key.upper()
 
-        logger.info(f"Uczeń: {user.display_name} Podany nick: {name}")
+        if key not in self.student_keys:
+            logger.warning(
+                f"Nieudana próba weryfikacji ucznia: {user.display_name} - {name}, Klasa: {clss}, Klucz: {key}"
+            )
+            text = (f":warning: **Nieudana próba weryfikacji jako uczeń (błędny klucz)** :warning:\n"
+                    f"**Użytkownik - {user.mention}**\n\n"
+                    f"Podane dane:\n"
+                    f"`Imię i nazwisko` - {name}\n"
+                    f"`Klasa` - {clss}\n"
+                    f"`Klucz weryfikacyjny` - {key}\n\n"
+                    f"`Data utworzenia konta` - <t:{int(user.created_at.timestamp())}:F>\n"
+                    f"`Data dołączenia do serwera` - <t:{int(user.joined_at.timestamp())}:F>")
+            embed = discord.Embed(description=text, color=discord.Color.red())
+            await self.bot.get_channel(VERIFICATION_CHANNEL).send(embed=embed)
+            return
 
-        await user.edit(nick=name)
+        try:
+            await user.edit(nick=f"{self.student_keys[key][0]} {self.student_keys[key][1]}")
+        except discord.Forbidden:
+            pass
 
-        if user.id not in STUDENT_DATA:
-            other_guilds = ':warning: **Użytkownika nie ma na żadnym serwerze klasowym**'
-        else:
-            other_guilds = '`Na innych serwerach:`\n'
-            for guild in STUDENT_DATA[user.id]:
-                other_guilds += f'{guild["guild"]}  -  {guild["nick"]}\n'
+        if name.lower() == self.student_keys[key][0].lower() and clss.lower() == self.student_keys[key][1].lower():
+            logger.info(f"Uczeń: {user.display_name} zweryfikowany przy pomocy klucza")
+            text = (f':school_satchel: **Uczeń - {user.mention}**\n'
+                    f'`Imię i nazwisko` - {name}\n'
+                    f'`Klasa` - {clss}\n'
+                    f'`Klucz` - {key}\n\n'
+                    f':white_check_mark: **Zweryfikowano automatycznie przy pomocy klucza**')
+            embed = discord.Embed(description=text, color=discord.Color.green())
+            await self.bot.get_channel(VERIFICATION_CHANNEL).send(embed=embed)
+            await user.add_roles(interaction.guild.get_role(VERIFIED_ROLES[0]))
+            return
 
-        text = f'**Uczeń - {user.mention}**\n' \
-               f'`Podane dane` - {name}\n\n' \
-               f'{other_guilds}'
-        embed = discord.Embed(description=text, color=discord.Color.blurple())
+        text = (f':school_satchel: **Uczeń - {user.mention}**\n'
+                f'Podane dane:\n'
+                f'`Imię i nazwisko` - {name}\n'
+                f'`Klasa` - {clss}\n'
+                f'`Klucz` - {key}\n\n'
+                f'Dane z bazy:\n'
+                f'`Imię i nazwisko` - {self.student_keys[key][0]}\n'
+                f'`Klasa` - {self.student_keys[key][1]}')
+        embed = discord.Embed(description=text, color=discord.Color.yellow())
 
         view = discord.ui.View(timeout=None)
         view.add_item(ApproveButton(self.bot, user.id, 0))
