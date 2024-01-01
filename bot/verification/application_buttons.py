@@ -145,7 +145,7 @@ class VerifyTeacherButton(ui.Button):
         key = modal.children[1].value
 
         if key != TEACHER_KEY:
-            logger.warning(f"Nieudana próba weryfikacji nauczyciela: {user.display_name} - {name}, Kod dostępu: {key}")
+            logger.warning(f"Nieudana próba weryfikacji nauczyciela: {user.display_name} - {name}, Klucz: {key}")
             text = f":warning: **Nieudana próba weryfikacji jako nauczyciel** :warning:\n" \
                    f"**Użytkownik - {user.mention}**\n" \
                    f"Imię i nazwisko: {name}\n" \
@@ -158,8 +158,8 @@ class VerifyTeacherButton(ui.Button):
             return
 
         await user.edit(nick=name)
-        logger.info(f"Nauczyciel: {user.display_name} zweryfikowany przy pomocy kodu")
+        logger.info(f"Nauczyciel: {user.display_name} zweryfikowany przy pomocy klucza")
         await user.add_roles(guild.get_role(VERIFIED_ROLES[2]))
         await guild.get_channel(VERIFICATION_CHANNEL).send(
-            f':white_check_mark::teacher: **Użytkownik {user.mention} zweryfikował się jako nauczyciel** (kod dostępu)'
+            f':white_check_mark::teacher: **Użytkownik {user.mention} zweryfikował się jako nauczyciel** (klucz weryfikacyjny)'
         )

@@ -29,7 +29,7 @@ class ApproveButton(discord.ui.Button):
         await interaction.message.edit(embed=embed, view=discord.ui.View())
 
         try:
-            await user.send(':white_check_mark: **Twoje konto zostało zweryfikowane pomyślnie!**\nDziękujemy za weryfikację i zapraszamy do licytowania.')
+            await user.send(':white_check_mark: **Twoje konto zostało zweryfikowane!**\nDziękujemy za weryfikację i zapraszamy do licytowania.')
         except discord.Forbidden:
             pass
 

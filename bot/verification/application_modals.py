@@ -95,13 +95,13 @@ class TeacherVerificationModal(ui.Modal):
         )
         self.add_item(ui.InputText(
             style=discord.InputTextStyle.short,
-            label="Kod dostępu",
+            label="Klucz weryfikacyjny",
             placeholder="(przesłany na librusie)")
         )
 
     async def callback(self, interaction):
         text = ':white_check_mark: **Weryfikacja przebiegła pomyślnie!**'
         if self.children[1].value != TEACHER_KEY:
-            text = ':x: **Podany kod dostępu jest niepoprawny!**'
+            text = ':x: **Podany klucz weryfikacyjny jest niepoprawny!**'
         await interaction.response.send_message(text, ephemeral=True)
 
