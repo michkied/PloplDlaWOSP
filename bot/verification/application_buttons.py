@@ -31,14 +31,14 @@ class VerifyStudentButton(ui.Button):
             logger.warning(
                 f"Nieudana próba weryfikacji ucznia: {user.display_name} - {name}, Klasa: {clss}, Klucz: {key}"
             )
-            text = (f":warning: **Nieudana próba weryfikacji jako uczeń (błędny klucz)** :warning:\n"
-                    f"**Użytkownik - {user.mention}**\n\n"
+            text = (f":school_satchel: **Uczeń - {user.mention}**\n\n"
                     f"Podane dane:\n"
                     f"`Imię i nazwisko` - {name}\n"
                     f"`Klasa` - {clss}\n"
-                    f"`Klucz weryfikacyjny` - {key}\n\n"
+                    f"`Klucz` - {key}\n\n"
                     f"`Data utworzenia konta` - <t:{int(user.created_at.timestamp())}:F>\n"
-                    f"`Data dołączenia do serwera` - <t:{int(user.joined_at.timestamp())}:F>")
+                    f"`Data dołączenia do serwera` - <t:{int(user.joined_at.timestamp())}:F>\n\n"
+                    f":x: **Odrzucono automatycznie** (błędny klucz)")
             embed = discord.Embed(description=text, color=discord.Color.red())
             await self.bot.get_channel(VERIFICATION_CHANNEL).send(embed=embed)
             return
@@ -60,7 +60,7 @@ class VerifyStudentButton(ui.Button):
             await user.add_roles(interaction.guild.get_role(VERIFIED_ROLES[0]))
             return
 
-        text = (f':school_satchel: **Uczeń - {user.mention}**\n'
+        text = (f':school_satchel: **Uczeń - {user.mention}**\n\n'
                 f'Podane dane:\n'
                 f'`Imię i nazwisko` - {name}\n'
                 f'`Klasa` - {clss}\n'
@@ -156,10 +156,30 @@ class VerifyTeacherButton(ui.Button):
             logger.info(f"Nauczyciel: {user.display_name} znaleziony na liście ID")
             await user.add_roles(guild.get_role(VERIFIED_ROLES[2]))
             await interaction.response.send_message(":white_check_mark: **Weryfikacja przebiegła pomyślnie!**", ephemeral=True)
-            await guild.get_channel(VERIFICATION_CHANNEL).send(
-                f':white_check_mark::teacher: **Użytkownik {user.mention} zweryfikował się jako nauczyciel** (lista ID)'
-            )
+            text = (f':teacher: **Nauczyciel - {user.mention}**\n\n'
+                    f':white_check_mark: **Zweryfikowano automatycznie** (lista ID)')
+            embed = discord.Embed(description=text, color=discord.Color.green())
+            await guild.get_channel(VERIFICATION_CHANNEL).send(embed=embed)
             return
+
+        old_guild = self.bot.get_guild(OLD_GUILD)
+        old_member = old_guild.get_member(user.id)
+        if old_member is not None:
+            if old_guild.get_role(OLD_VERIFIED_ROLES[2]) in old_member.roles:
+                await interaction.response.send_message(
+                    ":white_check_mark: **Weryfikacja przebiegła pomyślnie!**", ephemeral=True
+                )
+                logger.info(f"Nauczyciel: {user.display_name} zweryfikowany przez obecność na starym serwerze")
+                text = (f':teacher: **Nauczyciel - {user.mention}**\n\n'
+                        f':white_check_mark: **Zweryfikowano automatycznie** (obecność na starym serwerze)')
+                embed = discord.Embed(description=text, color=discord.Color.green())
+                await self.bot.get_channel(VERIFICATION_CHANNEL).send(embed=embed)
+                await user.add_roles(interaction.guild.get_role(VERIFIED_ROLES[2]))
+                try:
+                    await user.edit(nick=old_member.nick)
+                except discord.Forbidden:
+                    pass
+                return
 
         modal = TeacherVerificationModal()
         await interaction.response.send_modal(modal)
@@ -171,12 +191,13 @@ class VerifyTeacherButton(ui.Button):
 
         if key != TEACHER_KEY:
             logger.warning(f"Nieudana próba weryfikacji nauczyciela: {user.display_name} - {name}, Klucz: {key}")
-            text = f":warning: **Nieudana próba weryfikacji jako nauczyciel** :warning:\n" \
-                   f"**Użytkownik - {user.mention}**\n" \
-                   f"Imię i nazwisko: {name}\n" \
-                   f"Podany kod dostępu: {key}\n\n" \
-                   f"Data utworzenia konta: <t:{int(user.created_at.timestamp())}:F>\n" \
-                   f"Data dołączenia do serwera: <t:{int(user.joined_at.timestamp())}:F>"
+            text = (f":teacher: **Nauczyciel - {user.mention}**\n\n"
+                    f"Podane dane:\n"
+                    f"`Imię i nazwisko` - {name}\n"
+                    f"`Podany klucz` - {key}\n\n"
+                    f"`Data utworzenia konta` - <t:{int(user.created_at.timestamp())}:F>\n"
+                    f"`Data dołączenia do serwera` - <t:{int(user.joined_at.timestamp())}:F>\n\n"
+                    f":x: **Odrzucono automatycznie** (błędny klucz)")
 
             embed = discord.Embed(description=text, color=discord.Color.red())
             await self.bot.get_channel(VERIFICATION_CHANNEL).send(embed=embed)
@@ -188,6 +209,7 @@ class VerifyTeacherButton(ui.Button):
             pass
         logger.info(f"Nauczyciel: {user.display_name} zweryfikowany przy pomocy klucza")
         await user.add_roles(guild.get_role(VERIFIED_ROLES[2]))
-        await guild.get_channel(VERIFICATION_CHANNEL).send(
-            f':white_check_mark::teacher: **Użytkownik {user.mention} zweryfikował się jako nauczyciel** (klucz weryfikacyjny)'
-        )
+        text = (f':teacher: **Nauczyciel - {user.mention}**\n\n'
+                f':white_check_mark: **Zweryfikowano automatycznie** (klucz weryfikacyjny)')
+        embed = discord.Embed(description=text, color=discord.Color.green())
+        await guild.get_channel(VERIFICATION_CHANNEL).send(embed=embed)
