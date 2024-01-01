@@ -11,7 +11,7 @@ class VerifyStudentButton(ui.Button):
     async def callback(self, interaction: discord.Interaction):
         user = interaction.user
 
-        role_ids = map(lambda role: role.id, user.roles)
+        role_ids = list(map(lambda role: role.id, user.roles))
         if UNVERIFIED_ROLES[0] in role_ids or UNVERIFIED_ROLES[1] in role_ids:
             await interaction.response.send_message(
                 ":x: **Cierpliwości!**\nTwoje zgłoszenie już do nas dotarło i jest w trakcie weryfikacji.",
@@ -54,7 +54,7 @@ class VerifyStudentButton(ui.Button):
                     f'`Imię i nazwisko` - {name}\n'
                     f'`Klasa` - {clss}\n'
                     f'`Klucz` - {key}\n\n'
-                    f':white_check_mark: **Zweryfikowano automatycznie przy pomocy klucza**')
+                    f':white_check_mark: **Zweryfikowano automatycznie** (klucz weryfikacyjny)')
             embed = discord.Embed(description=text, color=discord.Color.green())
             await self.bot.get_channel(VERIFICATION_CHANNEL).send(embed=embed)
             await user.add_roles(interaction.guild.get_role(VERIFIED_ROLES[0]))
@@ -86,10 +86,32 @@ class VerifyGraduateButton(ui.Button):
     async def callback(self, interaction: discord.Interaction):
         user = interaction.user
 
-        role_ids = map(lambda role: role.id, user.roles)
+        role_ids = list(map(lambda role: role.id, user.roles))
         if UNVERIFIED_ROLES[0] in role_ids or UNVERIFIED_ROLES[1] in role_ids:
-            await interaction.response.send_message(":x: **Cierpliwości!**\nTwoje zgłoszenie już do nas dotarło i jest w trakcie weryfikacji.", ephemeral=True)
+            await interaction.response.send_message(
+                ":x: **Cierpliwości!**\nTwoje zgłoszenie już do nas dotarło i jest w trakcie weryfikacji.",
+                ephemeral=True
+            )
             return
+
+        old_guild = self.bot.get_guild(OLD_GUILD)
+        old_member = old_guild.get_member(user.id)
+        if old_member is not None:
+            if old_guild.get_role(OLD_VERIFIED_ROLES[1]) in old_member.roles:
+                await interaction.response.send_message(
+                    ":white_check_mark: **Weryfikacja przebiegła pomyślnie!**", ephemeral=True
+                )
+                logger.info(f"Absolwent: {user.display_name} zweryfikowany przez obecność na starym serwerze")
+                text = (f':mortar_board: **Absolwent - {user.mention}**\n\n'
+                        f':white_check_mark: **Zweryfikowano automatycznie** (obecność na starym serwerze)')
+                embed = discord.Embed(description=text, color=discord.Color.green())
+                await self.bot.get_channel(VERIFICATION_CHANNEL).send(embed=embed)
+                await user.add_roles(interaction.guild.get_role(VERIFIED_ROLES[1]))
+                try:
+                    await user.edit(nick=old_member.nick)
+                except discord.Forbidden:
+                    pass
+                return
 
         modal = GraduateVerificationModal()
         await interaction.response.send_modal(modal)
@@ -99,12 +121,12 @@ class VerifyGraduateButton(ui.Button):
             return
         clss = clss.upper()
 
-        text = f'**Absolwent - {user.mention}**\n' \
+        text = f':mortar_board: **Absolwent - {user.mention}**\n' \
                f'`Imię` - {name}\n' \
                f'`Klasa` - {clss}\n' \
                f'`Rok ukończenia` - {year}\n' \
                f'`Wychowawca` - {teacher}'
-        embed = discord.Embed(description=text, color=discord.Color.blurple())
+        embed = discord.Embed(description=text, color=discord.Color.yellow())
 
         logger.info(f"Absolwent: {user.display_name}, Imię: {name}, Klasa: {clss}, Rok ukończenia: {year}, Wychowawca: "
                     f"{teacher}")
@@ -113,7 +135,10 @@ class VerifyGraduateButton(ui.Button):
         view.add_item(ApproveButton(self.bot, user.id, 1))
         view.add_item(DenyButton(self.bot, user.id, 1))
 
-        await user.edit(nick=name)
+        try:
+            await user.edit(nick=name)
+        except discord.Forbidden:
+            pass
         await self.bot.get_channel(VERIFICATION_CHANNEL).send(embed=embed, view=view)
         await user.add_roles(interaction.guild.get_role(UNVERIFIED_ROLES[1]))
 
@@ -157,7 +182,10 @@ class VerifyTeacherButton(ui.Button):
             await self.bot.get_channel(VERIFICATION_CHANNEL).send(embed=embed)
             return
 
-        await user.edit(nick=name)
+        try:
+            await user.edit(nick=name)
+        except discord.Forbidden:
+            pass
         logger.info(f"Nauczyciel: {user.display_name} zweryfikowany przy pomocy klucza")
         await user.add_roles(guild.get_role(VERIFIED_ROLES[2]))
         await guild.get_channel(VERIFICATION_CHANNEL).send(
