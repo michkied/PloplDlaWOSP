@@ -29,18 +29,12 @@ UNVERIFIED_ROLES = [0, 1, 2]
 VERIFIED_ROLES = [0, 1, 2]
 
 
+# Old guild data used for verification
+OLD_GUILD = 0
+OLD_VERIFIED_ROLES = [0, 1, 2]
+
+
 # List of teacher ids
 TEACHERS = []
 
 
-# User guilds nickname data
-# Structure:
-#
-# {
-# USER_ID: [
-#   {'guild': 'GUILD_NAME_1', 'nick': 'NICKNAME_1'},
-#   {'guild': 'GUILD_NAME_2', 'nick': 'NICKNAME_2'}, ...
-#   ]
-# }
-
-STUDENT_DATA = {}
