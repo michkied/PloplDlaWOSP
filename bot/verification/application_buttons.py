@@ -60,6 +60,18 @@ class VerifyStudentButton(ui.Button):
             await user.add_roles(interaction.guild.get_role(VERIFIED_ROLES[0]))
             return
 
+        old_guild = self.bot.get_guild(OLD_GUILD)
+        old_member = old_guild.get_member(user.id)
+        old_student_role = old_guild.get_role(OLD_VERIFIED_ROLES[1])
+        if old_member is not None:
+            old_guild_text = (
+                f'Dane ze starego serwera:\n'
+                f'`Nick` - {old_member.display_name}\n'
+                f'`Zweryfikowany?` - **{"Tak" if old_student_role in old_member.roles else "Nie"}**'
+            )
+        else:
+            old_guild_text = '*Użytkownika nie ma na starym serwerze*'
+
         text = (f':school_satchel: **Uczeń - {user.mention}**\n\n'
                 f'Podane dane:\n'
                 f'`Imię i nazwisko` - {name}\n'
@@ -67,7 +79,8 @@ class VerifyStudentButton(ui.Button):
                 f'`Klucz` - {key}\n\n'
                 f'Dane z bazy:\n'
                 f'`Imię i nazwisko` - {self.student_keys[key][0]}\n'
-                f'`Klasa` - {self.student_keys[key][1]}')
+                f'`Klasa` - {self.student_keys[key][1]}\n\n'
+                f'{old_guild_text}')
         embed = discord.Embed(description=text, color=discord.Color.yellow())
 
         view = discord.ui.View(timeout=None)
