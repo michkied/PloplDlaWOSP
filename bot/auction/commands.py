@@ -139,7 +139,7 @@ class Auction(commands.Cog):
 
     @commands.slash_command()
     async def end(self, ctx, duration: discord.commands.Option(int, default=20)):
-        """Zakończ licytację"""
+        """Zakończ licytację po opływie określonego czasu"""
 
         if ORGANIZER_ROLE not in list(map(lambda x: x.id, ctx.user.roles)):
             await ctx.response.send_message(':x: **Nie masz uprawnień do użycia tej komendy!**', ephemeral=True)
@@ -156,11 +156,7 @@ class Auction(commands.Cog):
             logger.warning(f"{ctx.user.display_name} próbował zakończyć licytację gdy żadna nie trwała")
             return
 
-
-
-
-
-        message = await ctx.response.send_message(f"**Do końca licytacji zostało {duration} sekund!**")
+        await ctx.response.send_message(f"**Do końca licytacji zostało {duration} sekund!**")
         self.stop_timer = False
         while True:
             duration -= 1
@@ -170,11 +166,13 @@ class Auction(commands.Cog):
             elif duration == 15:
                 await ctx.interaction.edit_original_message(content=f"**Do końca licytacji zostało {duration} sekund!**")
             elif duration == 10:
-                await ctx.interaction.edit_original_message(content=f"**Do końca zostało 10 sekund!**")
+                await ctx.interaction.edit_original_message(content=f"**Do końca licytacji zostało 10 sekund!**")
             elif 5 <= duration <= 10:
-                await ctx.interaction.edit_original_message(content=f"**Do końca zostało {duration} sekund!**")
-            elif 1 <= duration <= 4:
-                await ctx.interaction.edit_original_message(content=f"**Do końca zostały {duration} sekundy!**")
+                await ctx.interaction.edit_original_message(content=f"**Do końca licytacji zostało {duration} sekund!**")
+            elif 2 <= duration <= 4:
+                await ctx.interaction.edit_original_message(content=f"**Do końca licytacji zostały {duration} sekundy!**")
+            elif duration == 1:
+                await ctx.interaction.edit_original_message(content=f"**Do końca licytacji została {duration} sekunda!**")
             elif duration == 0:
                 break
             if self.stop_timer == True:
@@ -205,10 +203,9 @@ class Auction(commands.Cog):
         self.data['price'] = 0
         await self.bot.loop.run_in_executor(None, self.update_files, self.data)
 
-
     @commands.slash_command()
     async def forceend(self, ctx):
-        """Zakończ licytację"""
+        """Natychmiast zakończ licytację"""
 
         if ORGANIZER_ROLE not in list(map(lambda x: x.id, ctx.user.roles)):
             await ctx.response.send_message(':x: **Nie masz uprawnień do użycia tej komendy!**', ephemeral=True)
@@ -250,7 +247,7 @@ class Auction(commands.Cog):
         await self.bot.loop.run_in_executor(None, self.update_files, self.data)
 
     @commands.slash_command()
-    async def pause(self, ctx,):
+    async def pause(self, ctx):
         if ORGANIZER_ROLE not in list(map(lambda x: x.id, ctx.user.roles)):
             await ctx.response.send_message(':x: **Nie masz uprawnień do użycia tej komendy!**', ephemeral=True)
             logger.warning(f"{ctx.user.display_name} próbował wstrzymać licytację")
@@ -271,7 +268,7 @@ class Auction(commands.Cog):
         await ctx.response.send_message(f":warning: **Licytacja wstrzymana!**")
 
     @commands.slash_command()
-    async def unpause(self, ctx,):
+    async def unpause(self, ctx):
         if ORGANIZER_ROLE not in list(map(lambda x: x.id, ctx.user.roles)):
             await ctx.response.send_message(':x: **Nie masz uprawnień do użycia tej komendy!**', ephemeral=True)
             logger.warning(f"{ctx.user.display_name} próbował wznowić licytację")
@@ -342,4 +339,3 @@ class Auction(commands.Cog):
         await ctx.channel.send(message)
         await ctx.response.send_message("Wysłano.", ephemeral=True)
         await ctx.interaction.delete_original_message()
-
