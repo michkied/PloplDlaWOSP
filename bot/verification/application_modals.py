@@ -22,12 +22,17 @@ class StudentVerificationModal(ui.Modal):
         )
         self.add_item(ui.InputText(
                 style=discord.InputTextStyle.short,
+                label="Numer z dziennika",
+                max_length=2)
+        )
+        self.add_item(ui.InputText(
+                style=discord.InputTextStyle.short,
                 label="Klucz weryfikacyjny",
                 placeholder="(otrzymany od przewodniczącego klasy)")
         )
 
     async def callback(self, interaction):
-        name, clss, key = list(map(lambda _: _.value, self.children))
+        name, clss, num, key = list(map(lambda _: _.value, self.children))
         key = key.upper()
 
         if key not in self.student_keys:
@@ -36,7 +41,8 @@ class StudentVerificationModal(ui.Modal):
             )
             return
 
-        if name.lower() != self.student_keys[key][0].lower() or clss.lower() != self.student_keys[key][1].lower():
+        data = self.student_keys[key]
+        if name.lower() != data[0].lower() or clss.lower() != data[1].lower() or num != data[2]:
             text = f'**Podane dane wymagają dodatkowej weryfikacji**\n' \
                 f'Automatyczna weryfikacja Twojego konta nie powiodła się. Wypełniony przez Ciebie formularz ' \
                 f'został przesłany do naszych moderatorów, którzy postarają się jak najszybciej sprawdzić Twoje dane.'

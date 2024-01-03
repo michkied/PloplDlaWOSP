@@ -24,17 +24,19 @@ class VerifyStudentButton(ui.Button):
         await modal.wait()
         if modal.children[0].value is None:
             return
-        name, clss, key = list(map(lambda _: _.value, modal.children))
+        name, clss, num, key = list(map(lambda _: _.value, modal.children))
         key = key.upper()
 
         if key not in self.student_keys:
             logger.warning(
-                f"Nieudana próba weryfikacji ucznia: {user.display_name} - {name}, Klasa: {clss}, Klucz: {key}"
+                f"Nieudana próba weryfikacji ucznia: {user.display_name} - {name}, "
+                f"Klasa: {clss}, Numer {num}, Klucz: {key}"
             )
             text = (f":school_satchel: **Uczeń - {user.mention}**\n\n"
                     f"Podane dane:\n"
                     f"`Imię i nazwisko` - {name}\n"
                     f"`Klasa` - {clss}\n"
+                    f"`Numer z dziennika` - {num}\n"
                     f"`Klucz` - {key}\n\n"
                     f"`Data utworzenia konta` - <t:{int(user.created_at.timestamp())}:F>\n"
                     f"`Data dołączenia do serwera` - <t:{int(user.joined_at.timestamp())}:F>\n\n"
@@ -44,15 +46,17 @@ class VerifyStudentButton(ui.Button):
             return
 
         try:
-            await user.edit(nick=f"{self.student_keys[key][0]} {self.student_keys[key][1]}")
+            await user.edit(nick=f"{name} {clss.upper()}")
         except discord.Forbidden:
             pass
 
-        if name.lower() == self.student_keys[key][0].lower() and clss.lower() == self.student_keys[key][1].lower():
+        data = self.student_keys[key]
+        if name.lower() == data[0].lower() and clss.lower() == data[1].lower() and num == data[2]:
             logger.info(f"Uczeń: {user.display_name} zweryfikowany przy pomocy klucza")
             text = (f':school_satchel: **Uczeń - {user.mention}**\n'
                     f'`Imię i nazwisko` - {name}\n'
                     f'`Klasa` - {clss}\n'
+                    f'`Numer z dziennika` - {num}\n'
                     f'`Klucz` - {key}\n\n'
                     f':white_check_mark: **Zweryfikowano automatycznie** (klucz weryfikacyjny)')
             embed = discord.Embed(description=text, color=discord.Color.green())
@@ -66,8 +70,8 @@ class VerifyStudentButton(ui.Button):
         if old_member is not None:
             old_guild_text = (
                 f'Dane ze starego serwera:\n'
+                f'`Zweryfikowany jako uczeń?` - **{"Tak" if old_student_role in old_member.roles else "Nie"}**'
                 f'`Nick` - {old_member.display_name}\n'
-                f'`Zweryfikowany?` - **{"Tak" if old_student_role in old_member.roles else "Nie"}**'
             )
         else:
             old_guild_text = '*Użytkownika nie ma na starym serwerze*'
@@ -76,10 +80,12 @@ class VerifyStudentButton(ui.Button):
                 f'Podane dane:\n'
                 f'`Imię i nazwisko` - {name}\n'
                 f'`Klasa` - {clss}\n'
+                f'`Numer z dziennika` - {num}\n'
                 f'`Klucz` - {key}\n\n'
                 f'Dane z bazy:\n'
                 f'`Imię i nazwisko` - {self.student_keys[key][0]}\n'
-                f'`Klasa` - {self.student_keys[key][1]}\n\n'
+                f'`Klasa` - {self.student_keys[key][1]}\n'
+                f'`Numer z dziennika` - {num}\n\n'
                 f'{old_guild_text}')
         embed = discord.Embed(description=text, color=discord.Color.yellow())
 
