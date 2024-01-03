@@ -330,3 +330,16 @@ class Auction(commands.Cog):
             text = f':warning: **Licytacja została cofnięta do kwoty wywoławczej - `{price} zł`**'
 
         await ctx.response.send_message(text)
+
+    @commands.slash_command()
+    async def say(self, ctx, message: str):
+
+        if ORGANIZER_ROLE not in list(map(lambda x: x.id, ctx.user.roles)):
+            await ctx.response.send_message(':x: **Nie masz uprawnień do użycia tej komendy!**', ephemeral=True)
+            logger.warning(f"{ctx.user.display_name} próbował użyć komenmdy /say")
+            return
+
+        await ctx.channel.send(message)
+        await ctx.response.send_message("Wysłano.", ephemeral=True)
+        await ctx.interaction.delete_original_message()
+
