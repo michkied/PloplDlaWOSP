@@ -10,6 +10,7 @@ path = str(pathlib.Path(__file__).parent.absolute())
 class Auction(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.stop_timer = False
         with open(path + '\\data.json', 'r+', encoding="UTF-8") as f:
             self.data = json.loads(f.read())[0]
         with open(path + '\\history.json', 'r+', encoding="UTF-8") as f:
@@ -38,6 +39,7 @@ class Auction(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, msg):
+
         if msg.channel.id != AUCTION_CHANNEL or msg.author.id == self.bot.user.id:
             return
 
@@ -98,6 +100,7 @@ class Auction(commands.Cog):
         self.data['price'] = new_price
         self.data['highest_bidder'] = msg.author.id
         self.data['last_bid_msg'] = f'{msg.author.display_name} podbija do {new_price} zł!'
+        self.stop_timer = True
 
         await self.bot.loop.run_in_executor(None, self.update_files, self.data)
         await msg.channel.send(f'**{msg.author.mention} podbija cenę do `{new_price} zł`!**{diff_info}')
@@ -135,8 +138,8 @@ class Auction(commands.Cog):
         logger.info("Start licytacji: *" + name + "* Cena:" + str(price))
 
     @commands.slash_command()
-    async def end(self, ctx):
-        """Zakończ licytację"""
+    async def end(self, ctx, duration: discord.commands.Option(int, default=20)):
+        """Zakończ licytację po opływie określonego czasu"""
 
         if ORGANIZER_ROLE not in list(map(lambda x: x.id, ctx.user.roles)):
             await ctx.response.send_message(':x: **Nie masz uprawnień do użycia tej komendy!**', ephemeral=True)
@@ -153,6 +156,73 @@ class Auction(commands.Cog):
             logger.warning(f"{ctx.user.display_name} próbował zakończyć licytację gdy żadna nie trwała")
             return
 
+        await ctx.response.send_message(f"**Do końca licytacji zostało {duration} sekund!**")
+        self.stop_timer = False
+        while True:
+            duration -= 1
+
+            if duration == 20:
+                await ctx.interaction.edit_original_message(content=f"**Do końca licytacji zostało {duration} sekund!**")
+            elif duration == 15:
+                await ctx.interaction.edit_original_message(content=f"**Do końca licytacji zostało {duration} sekund!**")
+            elif duration == 10:
+                await ctx.interaction.edit_original_message(content=f"**Do końca licytacji zostało 10 sekund!**")
+            elif 5 <= duration <= 10:
+                await ctx.interaction.edit_original_message(content=f"**Do końca licytacji zostało {duration} sekund!**")
+            elif 2 <= duration <= 4:
+                await ctx.interaction.edit_original_message(content=f"**Do końca licytacji zostały {duration} sekundy!**")
+            elif duration == 1:
+                await ctx.interaction.edit_original_message(content=f"**Do końca licytacji została {duration} sekunda!**")
+            elif duration == 0:
+                break
+            if self.stop_timer == True:
+                await ctx.interaction.delete_original_message()
+                return
+
+            await asyncio.sleep(1)
+        self.data['running'] = False
+        # await ctx.channel.set_permissions(ctx.guild.default_role, overwrite=discord.PermissionOverwrite(send_messages=False))
+        if self.data['highest_bidder'] != 0:
+            highest_bidder = ctx.guild.get_member(self.data['highest_bidder'])
+            await ctx.interaction.edit_original_message(content=f"▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n\n:tada: **Licytacja zakończyła się!** :tada:\n"
+                                            f"{highest_bidder.mention} "
+                                            f"kupił(a) `{self.data['name']}` za `{self.data['price']} zł`!")
+            self.data['last_bid_msg'] = f"Sprzedane za {self.data['price']} zł!"
+            logger.info(f"Licytacja zakończyła się: {highest_bidder.display_name} "
+                        f"kupił {self.data['name']} za {self.data['price']}")
+        else:
+            await ctx.interaction.edit_original_message(content=
+                f"▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n\n**Licytacja zakończyła się!**\nNikt nie wylicytował przedmiotu")
+            self.data['last_bid_msg'] = 'Licytacja zakończona! Nikt nie wylicytował przedmiotu'
+            logger.info("Licytacja zakończyła się, nikt nie wylicytował przedmiotu")
+
+        await self.bot.loop.run_in_executor(None, self.update_files, self.data)
+        await asyncio.sleep(20)
+        self.data['last_bid_msg'] = ''
+        self.data['name'] = ''
+        self.data['price'] = 0
+        await self.bot.loop.run_in_executor(None, self.update_files, self.data)
+
+    @commands.slash_command()
+    async def forceend(self, ctx):
+        """Natychmiast zakończ licytację"""
+
+        if ORGANIZER_ROLE not in list(map(lambda x: x.id, ctx.user.roles)):
+            await ctx.response.send_message(':x: **Nie masz uprawnień do użycia tej komendy!**', ephemeral=True)
+            logger.warning(f"{ctx.user.display_name} próbował zakończyć licytację")
+            return
+
+        if ctx.channel.id != AUCTION_CHANNEL:
+            await ctx.response.send_message(':x: **Używasz komendy na złym kanale!**', ephemeral=True)
+            logger.warning(f"{ctx.user.display_name} próbował zakończyć licytację na złym kanale")
+            return
+
+        if not self.data['running']:
+            await ctx.response.send_message(':x: **Nie trwa żadna licytacja!**', ephemeral=True)
+            logger.warning(f"{ctx.user.display_name} próbował zakończyć licytację gdy żadna nie trwała")
+            return
+
+        self.stop_timer = True
         self.data['running'] = False
         # await ctx.channel.set_permissions(ctx.guild.default_role, overwrite=discord.PermissionOverwrite(send_messages=False))
         if self.data['highest_bidder'] != 0:
@@ -164,7 +234,8 @@ class Auction(commands.Cog):
             logger.info(f"Licytacja zakończyła się: {highest_bidder.display_name} "
                         f"kupił {self.data['name']} za {self.data['price']}")
         else:
-            await ctx.response.send_message(f"▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n\n**Licytacja zakończyła się!**\nNikt nie wylicytował przedmiotu")
+            await ctx.response.send_message(
+                f"▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n\n**Licytacja zakończyła się!**\nNikt nie wylicytował przedmiotu")
             self.data['last_bid_msg'] = 'Licytacja zakończona! Nikt nie wylicytował przedmiotu'
             logger.info("Licytacja zakończyła się, nikt nie wylicytował przedmiotu")
 
@@ -192,7 +263,8 @@ class Auction(commands.Cog):
             logger.warning(f"{ctx.user.display_name} próbował wstrzymać licytację gdy żadna nie trwała")
             return
 
-        # await ctx.channel.set_permissions(ctx.guild.default_role, overwrite=discord.PermissionOverwrite(send_messages=False))
+        self.stop_timer = True
+        await ctx.channel.set_permissions(ctx.guild.default_role, overwrite=discord.PermissionOverwrite(send_messages=False))
         await ctx.response.send_message(f":warning: **Licytacja wstrzymana!**")
 
     @commands.slash_command()
@@ -212,7 +284,7 @@ class Auction(commands.Cog):
             logger.warning(f"{ctx.user.display_name} próbował wznowić licytację gdy żadna nie trwała")
             return
 
-        # await ctx.channel.set_permissions(ctx.guild.default_role, overwrite=discord.PermissionOverwrite(send_messages=True))
+        await ctx.channel.set_permissions(ctx.guild.default_role, overwrite=discord.PermissionOverwrite(send_messages=True))
         await ctx.response.send_message(f":tada: **Licytacja wznowiona!**")
 
     @commands.slash_command()
@@ -255,3 +327,15 @@ class Auction(commands.Cog):
             text = f':warning: **Licytacja została cofnięta do kwoty wywoławczej - `{price} zł`**'
 
         await ctx.response.send_message(text)
+
+    @commands.slash_command()
+    async def say(self, ctx, message: str):
+
+        if ORGANIZER_ROLE not in list(map(lambda x: x.id, ctx.user.roles)):
+            await ctx.response.send_message(':x: **Nie masz uprawnień do użycia tej komendy!**', ephemeral=True)
+            logger.warning(f"{ctx.user.display_name} próbował użyć komenmdy /say")
+            return
+
+        await ctx.channel.send(message)
+        await ctx.response.send_message("Wysłano.", ephemeral=True)
+        await ctx.interaction.delete_original_message()
