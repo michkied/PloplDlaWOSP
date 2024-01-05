@@ -1,25 +1,50 @@
+import json
+import pathlib
 from .decision_buttons import *
 from .application_modals import *
+
+path = str(pathlib.Path(__file__).parent.absolute())
 
 
 class VerifyStudentButton(ui.Button):
     def __init__(self, bot, student_keys):
         self.bot = bot
         self.student_keys = student_keys
+        with open(path + r'\\used_student_keys.json', 'r+', encoding='UTF-8') as f:
+            self.used_keys = json.loads(f.read())
         super().__init__(label="🎒 Uczeń", style=discord.enums.ButtonStyle.blurple, custom_id="STU_BUTTON")
+
+    def update_used_keys(self, key, user_id):
+        with open(path + r'\\used_student_keys.json', 'r+', encoding='UTF-8') as f:
+            data = json.loads(f.read())
+
+        if key not in data:
+            data[key] = str(user_id)
+            self.used_keys[key] = str(user_id)
+
+            with open(path + r'\\used_student_keys.json', 'w+', encoding='UTF-8') as f:
+                f.write(json.dumps(data, indent=4, ensure_ascii=False))
 
     async def callback(self, interaction: discord.Interaction):
         user = interaction.user
 
-        role_ids = list(map(lambda role: role.id, user.roles))
-        if UNVERIFIED_ROLES[0] in role_ids or UNVERIFIED_ROLES[1] in role_ids:
-            await interaction.response.send_message(
-                ":x: **Cierpliwości!**\nTwoje zgłoszenie już do nas dotarło i jest w trakcie weryfikacji.",
-                ephemeral=True
-            )
-            return
+        user_role_ids = list(map(lambda role: role.id, user.roles))
+        for verified_role_id in VERIFIED_ROLES:
+            if verified_role_id in user_role_ids:
+                await interaction.response.send_message(
+                    ":x: **Jesteś już zweryfikowany!**", ephemeral=True
+                )
+                return
 
-        modal = StudentVerificationModal(self.student_keys)
+        for unverified_role_id in UNVERIFIED_ROLES:
+            if unverified_role_id in user_role_ids:
+                await interaction.response.send_message(
+                    ":x: **Cierpliwości!**\nTwoje zgłoszenie już do nas dotarło i jest w trakcie weryfikacji.",
+                    ephemeral=True
+                )
+                return
+
+        modal = StudentVerificationModal(self.student_keys, self.used_keys)
         await interaction.response.send_modal(modal)
         await modal.wait()
         if modal.children[0].value is None:
@@ -51,7 +76,9 @@ class VerifyStudentButton(ui.Button):
             pass
 
         data = self.student_keys[key]
-        if name.lower() == data[0].lower() and clss.lower() == data[1].lower() and num == data[2]:
+        if (name.lower() == data[0].lower() and clss.lower() == data[1].lower() and
+                num == data[2] and key not in self.used_keys):
+            await self.bot.loop.run_in_executor(None, self.update_used_keys, key, user.id)
             logger.info(f"Uczeń: {user.display_name} zweryfikowany przy pomocy klucza")
             text = (f':school_satchel: **Uczeń - {user.mention}**\n'
                     f'Imię i nazwisko: `{name}`\n'
@@ -76,12 +103,18 @@ class VerifyStudentButton(ui.Button):
         else:
             old_guild_text = '*Użytkownika nie ma na starym serwerze*'
 
+        if key in self.used_keys:
+            key_used = f':warning: **Klucz został już użyty przez <@{self.used_keys[key]}>**'
+        else:
+            key_used = ':white_check_mark: Klucz nie został jeszcze użyty'
+
         text = (f':school_satchel: **Uczeń - {user.mention}**\n\n'
                 f'**Podane dane:**\n'
                 f'Imię i nazwisko: `{name}`\n'
                 f'Klasa: `{clss}`\n'
                 f'Numer z dziennika: `{num}`\n'
-                f'Klucz: `{key}`\n\n'
+                f'Klucz: `{key}`\n'
+                f'{key_used}\n\n'
                 f'**Dane z bazy:**\n'
                 f'Imię i nazwisko: `{data[0]}`\n'
                 f'Klasa: `{data[1]}`\n'

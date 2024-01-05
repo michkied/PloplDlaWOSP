@@ -3,12 +3,13 @@ from ..config import *
 
 
 class StudentVerificationModal(ui.Modal):
-    def __init__(self, student_keys):
+    def __init__(self, student_keys, used_keys):
         super().__init__(
             title="Weryfikacja konta ucznia",
             timeout=3600
         )
         self.student_keys = student_keys
+        self.used_keys = used_keys
 
         self.add_item(ui.InputText(
                 style=discord.InputTextStyle.short,
@@ -42,7 +43,8 @@ class StudentVerificationModal(ui.Modal):
             return
 
         data = self.student_keys[key]
-        if name.lower() != data[0].lower() or clss.lower() != data[1].lower() or num != data[2]:
+        if (name.lower() != data[0].lower() or clss.lower() != data[1].lower() or
+                num != data[2] or key in self.used_keys):
             text = f'**Podane dane wymagają dodatkowej weryfikacji**\n' \
                 f'Automatyczna weryfikacja Twojego konta nie powiodła się. Wypełniony przez Ciebie formularz ' \
                 f'został przesłany do naszych moderatorów, którzy postarają się jak najszybciej sprawdzić Twoje dane.'
