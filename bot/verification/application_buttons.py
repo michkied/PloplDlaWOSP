@@ -33,13 +33,13 @@ class VerifyStudentButton(ui.Button):
                 f"Klasa: {clss}, Numer {num}, Klucz: {key}"
             )
             text = (f":school_satchel: **Uczeń - {user.mention}**\n\n"
-                    f"Podane dane:\n"
-                    f"`Imię i nazwisko` - {name}\n"
-                    f"`Klasa` - {clss}\n"
-                    f"`Numer z dziennika` - {num}\n"
-                    f"`Klucz` - {key}\n\n"
-                    f"`Data utworzenia konta` - <t:{int(user.created_at.timestamp())}:F>\n"
-                    f"`Data dołączenia do serwera` - <t:{int(user.joined_at.timestamp())}:F>\n\n"
+                    f"**Podane dane:**\n"
+                    f"Imię i nazwisko: `{name}`\n"
+                    f"Klasa: `{clss}`\n"
+                    f"Numer z dziennika: `{num}`\n"
+                    f"Klucz: `{key}`\n\n"
+                    f"Data utworzenia konta: <t:{int(user.created_at.timestamp())}:F>\n"
+                    f"Data dołączenia do serwera: <t:{int(user.joined_at.timestamp())}:F>\n\n"
                     f":x: **Odrzucono automatycznie** (błędny klucz)")
             embed = discord.Embed(description=text, color=discord.Color.red())
             await self.bot.get_channel(VERIFICATION_CHANNEL).send(embed=embed)
@@ -54,10 +54,10 @@ class VerifyStudentButton(ui.Button):
         if name.lower() == data[0].lower() and clss.lower() == data[1].lower() and num == data[2]:
             logger.info(f"Uczeń: {user.display_name} zweryfikowany przy pomocy klucza")
             text = (f':school_satchel: **Uczeń - {user.mention}**\n'
-                    f'`Imię i nazwisko` - {name}\n'
-                    f'`Klasa` - {clss}\n'
-                    f'`Numer z dziennika` - {num}\n'
-                    f'`Klucz` - {key}\n\n'
+                    f'Imię i nazwisko: `{name}`\n'
+                    f'Klasa: `{clss}`\n'
+                    f'Numer z dziennika: `{num}`\n'
+                    f'Klucz: `{key}`\n\n'
                     f':white_check_mark: **Zweryfikowano automatycznie** (klucz weryfikacyjny)')
             embed = discord.Embed(description=text, color=discord.Color.green())
             await self.bot.get_channel(VERIFICATION_CHANNEL).send(embed=embed)
@@ -69,23 +69,23 @@ class VerifyStudentButton(ui.Button):
         old_student_role = old_guild.get_role(OLD_VERIFIED_ROLES[1])
         if old_member is not None:
             old_guild_text = (
-                f'Dane ze starego serwera:\n'
-                f'`Zweryfikowany jako uczeń?` - **{"Tak" if old_student_role in old_member.roles else "Nie"}**'
-                f'`Nick` - {old_member.display_name}\n'
+                f'**Dane ze starego serwera:**\n'
+                f'Zweryfikowany jako uczeń? `{"Tak" if old_student_role in old_member.roles else "Nie"}`\n'
+                f'Nick: `{old_member.display_name}`\n'
             )
         else:
             old_guild_text = '*Użytkownika nie ma na starym serwerze*'
 
         text = (f':school_satchel: **Uczeń - {user.mention}**\n\n'
-                f'Podane dane:\n'
-                f'`Imię i nazwisko` - {name}\n'
-                f'`Klasa` - {clss}\n'
-                f'`Numer z dziennika` - {num}\n'
-                f'`Klucz` - {key}\n\n'
-                f'Dane z bazy:\n'
-                f'`Imię i nazwisko` - {self.student_keys[key][0]}\n'
-                f'`Klasa` - {self.student_keys[key][1]}\n'
-                f'`Numer z dziennika` - {num}\n\n'
+                f'**Podane dane:**\n'
+                f'Imię i nazwisko: `{name}`\n'
+                f'Klasa: `{clss}`\n'
+                f'Numer z dziennika: `{num}`\n'
+                f'Klucz: `{key}`\n\n'
+                f'**Dane z bazy:**\n'
+                f'Imię i nazwisko: `{data[0]}`\n'
+                f'Klasa: `{data[1]}`\n'
+                f'Numer z dziennika: `{data[2]}`\n\n'
                 f'{old_guild_text}')
         embed = discord.Embed(description=text, color=discord.Color.yellow())
 
@@ -141,10 +141,10 @@ class VerifyGraduateButton(ui.Button):
         clss = clss.upper()
 
         text = f':mortar_board: **Absolwent - {user.mention}**\n' \
-               f'`Imię` - {name}\n' \
-               f'`Klasa` - {clss}\n' \
-               f'`Rok ukończenia` - {year}\n' \
-               f'`Wychowawca` - {teacher}'
+               f'Imię: `{name}`\n' \
+               f'Klasa: `{clss}`\n' \
+               f'Rok ukończenia: `{year}`\n' \
+               f'Wychowawca: `{teacher}`'
         embed = discord.Embed(description=text, color=discord.Color.yellow())
 
         logger.info(f"Absolwent: {user.display_name}, Imię: {name}, Klasa: {clss}, Rok ukończenia: {year}, Wychowawca: "
@@ -211,11 +211,11 @@ class VerifyTeacherButton(ui.Button):
         if key != TEACHER_KEY:
             logger.warning(f"Nieudana próba weryfikacji nauczyciela: {user.display_name} - {name}, Klucz: {key}")
             text = (f":teacher: **Nauczyciel - {user.mention}**\n\n"
-                    f"Podane dane:\n"
-                    f"`Imię i nazwisko` - {name}\n"
-                    f"`Podany klucz` - {key}\n\n"
-                    f"`Data utworzenia konta` - <t:{int(user.created_at.timestamp())}:F>\n"
-                    f"`Data dołączenia do serwera` - <t:{int(user.joined_at.timestamp())}:F>\n\n"
+                    f"**Podane dane:**\n"
+                    f"Imię i nazwisko: `{name}`\n"
+                    f"Podany klucz: `{key}`\n\n"
+                    f"Data utworzenia konta: <t:{int(user.created_at.timestamp())}:F>\n"
+                    f"Data dołączenia do serwera: <t:{int(user.joined_at.timestamp())}:F>\n\n"
                     f":x: **Odrzucono automatycznie** (błędny klucz)")
 
             embed = discord.Embed(description=text, color=discord.Color.red())
