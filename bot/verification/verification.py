@@ -1,10 +1,17 @@
 import json
 import pathlib
+import requests
+import os
 from discord.ext import commands
 from .application_buttons import *
 from ..config import *
 
 path = str(pathlib.Path(__file__).parent.absolute())
+
+
+def download(url):
+    r = requests.get(url)
+    open(path + r'\\img.' + url.split('.')[-1], 'wb').write(r.content)
 
 
 class Verification(commands.Cog):
@@ -44,10 +51,17 @@ class Verification(commands.Cog):
         view.add_item(VerifyGraduateButton(self.bot))
         view.add_item(VerifyTeacherButton(self.bot))
 
-        text = '**Witaj w systemie weryfikacji uczestników VII Wielkiej Licytacji PLOPŁ dla WOŚP!\n\n' \
-               'Aby się zweryfikować, wybierz swoją kategorię wciskając odpowiedni przycisk:**'
-        embed = discord.Embed(description=text, colour=0x001437)
-        embed.set_image(url=VERIFICATION_IMAGE_URL)
+        extension = VERIFICATION_IMAGE_URL.split('.')[-1]
+        if not os.path.exists(path + r'\\img.' + extension):
+            logger.info("Obraz do wiadomości Post nie został pobrany. Pobieranie...")
+            await self.bot.loop.run_in_executor(None, download, VERIFICATION_IMAGE_URL)
+            logger.info("Pobrano.")
 
-        await ctx.send(embed=embed, view=view)
+        await ctx.send(file=discord.File(path + r'\\img.' + extension))
+        text = ('# Siema!\n'
+                '**Witaj w systemie weryfikacji uczestników VII Wielkiej Licytacji PLOPŁ dla WOŚP!**\n'
+                'Cieszymy się, że grasz z nami! :tada:\n'
+                '### Aby się zweryfikować, wybierz swoją kategorię wciskając odpowiedni przycisk:')
+        await ctx.send(text, view=view)
+
         logger.info("Wiadomość Post wysłana")
