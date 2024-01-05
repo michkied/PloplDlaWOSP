@@ -66,7 +66,7 @@ class VerifyStudentButton(ui.Button):
 
         old_guild = self.bot.get_guild(OLD_GUILD)
         old_member = old_guild.get_member(user.id)
-        old_student_role = old_guild.get_role(OLD_VERIFIED_ROLES[1])
+        old_student_role = old_guild.get_role(OLD_VERIFIED_ROLES[0])
         if old_member is not None:
             old_guild_text = (
                 f'**Dane ze starego serwera:**\n'
