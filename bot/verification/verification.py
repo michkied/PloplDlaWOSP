@@ -1,7 +1,4 @@
-import json
-import pathlib
 import requests
-import os
 from discord.ext import commands
 from .application_buttons import *
 from ..config import *
@@ -11,13 +8,13 @@ path = str(pathlib.Path(__file__).parent.absolute())
 
 def download(url):
     r = requests.get(url)
-    open(path + r'\\img.' + url.split('.')[-1], 'wb').write(r.content)
+    open(os.path.join(path, f"img.{url.split('.')[-1]}"), 'wb').write(r.content)
 
 
 class Verification(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        with open(path + r'\\student_keys.json', 'r+', encoding='UTF-8') as f:
+        with open(os.path.join(path, 'student_keys.json'), 'r+', encoding='UTF-8') as f:
             self.student_keys = json.loads(f.read())
 
     @commands.Cog.listener()
@@ -52,12 +49,12 @@ class Verification(commands.Cog):
         view.add_item(VerifyTeacherButton(self.bot))
 
         extension = VERIFICATION_IMAGE_URL.split('.')[-1]
-        if not os.path.exists(path + r'\\img.' + extension):
+        if not os.path.exists(os.path.join(path, f'img.{extension}')):
             logger.info("Obraz do wiadomości Post nie został pobrany. Pobieranie...")
             await self.bot.loop.run_in_executor(None, download, VERIFICATION_IMAGE_URL)
             logger.info("Pobrano.")
 
-        await ctx.send(file=discord.File(path + r'\\img.' + extension))
+        await ctx.send(file=discord.File(os.path.join(path, f'img.{extension}')))
         text = ('# Siema!\n'
                 '**Witaj w systemie weryfikacji uczestników VII Wielkiej Licytacji PLOPŁ dla WOŚP!**\n'
                 'Cieszymy się, że grasz z nami! :tada:\n'

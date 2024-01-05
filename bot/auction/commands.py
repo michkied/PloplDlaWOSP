@@ -11,9 +11,9 @@ class Auction(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.stop_timer = False
-        with open(path + '\\data.json', 'r+', encoding="UTF-8") as f:
+        with open(os.path.join(path, 'data.json'), 'r+', encoding="UTF-8") as f:
             self.data = json.loads(f.read())[0]
-        with open(path + '\\history.json', 'r+', encoding="UTF-8") as f:
+        with open(os.path.join(path, 'history.json'), 'r+', encoding="UTF-8") as f:
             history = json.loads(f.read())
             self.history = {int(price): history[price] for price in history}
 
@@ -22,11 +22,11 @@ class Auction(commands.Cog):
 
     def clear_history(self):
         self.history = {}
-        with open(path + r"\\history.json", "w+", encoding="UTF-8") as f:
+        with open(os.path.join(path, "history.json"), "w+", encoding="UTF-8") as f:
             f.write('{}')
 
     def update_files(self, data):
-        with open(path + r'\\data.json', 'w+', encoding='UTF-8') as f:
+        with open(os.path.join(path, 'data.json'), 'w+', encoding='UTF-8') as f:
             f.write(json.dumps([data], indent=4))
 
         if str(data['price']) in self.history:
@@ -34,7 +34,7 @@ class Auction(commands.Cog):
         self.history[data['price']] = dict(
             filter(lambda x: x[0] in ['highest_bidder', 'sum', 'last_bid_msg'], data.items())
         )
-        with open(path + r'\\history.json', "w+", encoding='UTF-8') as f:
+        with open(os.path.join(path, 'history.json'), "w+", encoding='UTF-8') as f:
             f.write(json.dumps(self.history, indent=4))
 
     @commands.Cog.listener()

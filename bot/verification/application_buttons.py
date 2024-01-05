@@ -10,19 +10,19 @@ class VerifyStudentButton(ui.Button):
     def __init__(self, bot, student_keys):
         self.bot = bot
         self.student_keys = student_keys
-        with open(path + r'\\used_student_keys.json', 'r+', encoding='UTF-8') as f:
+        with open(os.path.join(path, 'used_student_keys.json'), 'r+', encoding='UTF-8') as f:
             self.used_keys = json.loads(f.read())
         super().__init__(label="🎒 Uczeń", style=discord.enums.ButtonStyle.blurple, custom_id="STU_BUTTON")
 
     def update_used_keys(self, key, user_id):
-        with open(path + r'\\used_student_keys.json', 'r+', encoding='UTF-8') as f:
+        with open(os.path.join(path, 'used_student_keys.json'), 'r+', encoding='UTF-8') as f:
             data = json.loads(f.read())
 
         if key not in data:
             data[key] = str(user_id)
             self.used_keys[key] = str(user_id)
 
-            with open(path + r'\\used_student_keys.json', 'w+', encoding='UTF-8') as f:
+            with open(os.path.join(path, 'used_student_keys.json'), 'w+', encoding='UTF-8') as f:
                 f.write(json.dumps(data, indent=4, ensure_ascii=False))
 
     async def callback(self, interaction: discord.Interaction):
