@@ -6,7 +6,7 @@ from logzero import logfile
 
 from bot.auction import Auction
 from bot.verification import Verification
-from bot.config import TOKEN
+from bot.config import TOKEN, AUCTION_GUILD
 
 # 0 - verification mode
 # 1 - auction mode
@@ -19,7 +19,7 @@ class WOSPBot(commands.Bot, ABC):
             command_prefix=commands.when_mentioned_or('?'),
             intents=discord.Intents.all(),
             auto_sync_commands=bool(mode),
-            debug_guilds=[801763888633872384]
+            debug_guilds=[AUCTION_GUILD]
         )
 
         self.remove_command('help')
@@ -43,4 +43,5 @@ class WOSPBot(commands.Bot, ABC):
         print('by Michał Kiedrzyński\n\n')
 
 
-WOSPBot()
+if __name__ == '__main__':
+    WOSPBot()

@@ -1,16 +1,22 @@
+import json
+import pathlib
 from discord.ext import commands
 from .application_buttons import *
 from ..config import *
+
+path = str(pathlib.Path(__file__).parent.absolute())
 
 
 class Verification(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        with open(path + r'\\student_keys.json', 'r+', encoding='UTF-8') as f:
+            self.student_keys = json.loads(f.read())
 
     @commands.Cog.listener()
     async def on_ready(self):
         view = discord.ui.View(timeout=None)
-        view.add_item(VerifyStudentButton(self.bot))
+        view.add_item(VerifyStudentButton(self.bot, self.student_keys))
         view.add_item(VerifyGraduateButton(self.bot))
         view.add_item(VerifyTeacherButton(self.bot))
         self.bot.add_view(view)
@@ -30,13 +36,15 @@ class Verification(commands.Cog):
 
     @commands.command()
     async def post(self, ctx):
+        if ORGANIZER_ROLE not in map(lambda role: role.id, ctx.author.roles):
+            return
         await ctx.message.delete()
         view = discord.ui.View(timeout=None)
-        view.add_item(VerifyStudentButton(self.bot))
+        view.add_item(VerifyStudentButton(self.bot, self.student_keys))
         view.add_item(VerifyGraduateButton(self.bot))
         view.add_item(VerifyTeacherButton(self.bot))
 
-        text = '**Witaj w systemie weryfikacji uczestników VI Wielkiej Licytacji PLOPŁ dla WOŚP!\n\n' \
+        text = '**Witaj w systemie weryfikacji uczestników VII Wielkiej Licytacji PLOPŁ dla WOŚP!\n\n' \
                'Aby się zweryfikować, wybierz swoją kategorię wciskając odpowiedni przycisk:**'
         embed = discord.Embed(description=text, colour=0x001437)
         embed.set_image(url=VERIFICATION_IMAGE_URL)
