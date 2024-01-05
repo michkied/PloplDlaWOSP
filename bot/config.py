@@ -1,6 +1,7 @@
 import discord
 import asyncio
 import time
+import os
 
 TOKEN = ''
 TEACHER_KEY = ''
