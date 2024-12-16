@@ -67,7 +67,7 @@ class Auction(commands.Cog):
             await msg.delete()
             logger.warning(f"{msg.author.display_name} próbował podbić cenę o {new_price - self.data['price']}")
             return
-
+        print("hello world")
         if self.data['highest_bidder']:
             diff_err_text = ':x: **Podana przez ciebie cena nie jest wyższa od poprzedniej o co najmniej 2 zł**'
             diff = 2
