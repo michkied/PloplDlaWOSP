@@ -2,4 +2,4 @@
 *.csv
 *.jpg
 *.png
-config.py
+__pycache__
