@@ -76,11 +76,11 @@ class Auction(commands.Cog):
             diff = 0
         if self.data['price'] >= 500:
             diff_err_text = ':x: **Podana przez ciebie cena nie jest wyższa od poprzedniej o co najmniej 5 zł**\n' \
-                   ':warning: Po przekroczeniu kwoty 1000 zł mnimalna kwota przebicia wynosi 5 zł'
+                   ':warning: Po przekroczeniu kwoty 500 zł mnimalna kwota przebicia wynosi 5 zł'
             diff = 5
         if self.data['price'] >= 1000:
             diff_err_text = ':x: **Podana przez ciebie cena nie jest wyższa od poprzedniej o co najmniej 5 zł**\n' \
-                   ':warning: Po przekroczeniu kwoty 1000 zł mnimalna kwota przebicia wynosi 5 zł'
+                   ':warning: Po przekroczeniu kwoty 1000 zł mnimalna kwota przebicia wynosi 10 zł'
             diff = 10
 
         diff_info = ''
