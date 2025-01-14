@@ -46,7 +46,7 @@ class Auction(commands.Cog):
         is_moderator = ORGANIZER_ROLE in list(map(lambda x: x.id, msg.author.roles))
 
         try:
-            new_price = int(msg.content.lower().replace('zł', '').replace('pln', '').replace('zl', '').replace('!', ''))
+            new_price = int(msg.content.lower().replace('zł', '').replace('pln', '').replace('zl', '').replace('!', '').replace('.', ''))
         except (ValueError, TypeError):
             if not is_moderator:
                 await msg.delete()
@@ -61,28 +61,35 @@ class Auction(commands.Cog):
             logger.warning(f"{msg.author.display_name} próbował licytować gdy nie trwała licytacja")
             return
 
-        if new_price - self.data['price'] > 9000:
+        if new_price - self.data['price'] > 5000:
             await self.bot.get_channel(LOG_CHANNEL).send(f'{msg.author.mention} próbował/a podbić cenę '
                                                          f'o {new_price - self.data["price"]}')
             await msg.delete()
             logger.warning(f"{msg.author.display_name} próbował podbić cenę o {new_price - self.data['price']}")
             return
-
+        
         if self.data['highest_bidder']:
             diff_err_text = ':x: **Podana przez ciebie cena nie jest wyższa od poprzedniej o co najmniej 2 zł**'
             diff = 2
         else:
             diff_err_text = ':x: **Podana przez ciebie cena jest niższa od ceny wywoławczej**'
             diff = 0
-        if self.data['price'] >= 1000:
+        if self.data['price'] >= 500:
             diff_err_text = ':x: **Podana przez ciebie cena nie jest wyższa od poprzedniej o co najmniej 5 zł**\n' \
-                   ':warning: Po przekroczeniu kwoty 1000 zł mnimalna kwota przebicia wynosi 5 zł'
+                   ':warning: Po przekroczeniu kwoty 500 zł mnimalna kwota przebicia wynosi 5 zł'
             diff = 5
+        if self.data['price'] >= 1000:
+            diff_err_text = ':x: **Podana przez ciebie cena nie jest wyższa od poprzedniej o co najmniej 10 zł**\n' \
+                   ':warning: Po przekroczeniu kwoty 1000 zł mnimalna kwota przebicia wynosi 10 zł'
+            diff = 10
 
         diff_info = ''
+        if self.data['price'] < 500 <= new_price:
+            diff_info = '\n\n**WOW! Mamy 500 złotych!** :star_struck:\n' \
+                         'Pora wytoczyć ciężkie działa - **od teraz przebijamy o minimum 5 zł!**'
         if self.data['price'] < 1000 <= new_price:
             diff_info = '\n\n**WOAH! Mamy 1000 złotych!** :partying_face:\n' \
-                         'Pora wytoczyć ciężkie działa - **od teraz przebijamy o minimum 5 zł!**'
+                         'Czas na wielką ofensywę - **od teraz przebijamy o minimum 10 zł!**'
 
         if new_price < self.data['price'] + diff:
             await msg.delete()
