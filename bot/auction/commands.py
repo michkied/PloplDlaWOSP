@@ -69,27 +69,27 @@ class Auction(commands.Cog):
             return
         
         if self.data['highest_bidder']:
-            diff_err_text = ':x: **Podana przez ciebie cena nie jest wyższa od poprzedniej o co najmniej 2 zł**'
-            diff = 2
+            diff_err_text = ':x: **Podana przez ciebie cena nie jest wyższa od poprzedniej o co najmniej 5 zł**'
+            diff = 5
         else:
             diff_err_text = ':x: **Podana przez ciebie cena jest niższa od ceny wywoławczej**'
             diff = 0
         if self.data['price'] >= 500:
-            diff_err_text = ':x: **Podana przez ciebie cena nie jest wyższa od poprzedniej o co najmniej 5 zł**\n' \
-                   ':warning: Po przekroczeniu kwoty 500 zł mnimalna kwota przebicia wynosi 5 zł'
-            diff = 5
-        if self.data['price'] >= 1000:
             diff_err_text = ':x: **Podana przez ciebie cena nie jest wyższa od poprzedniej o co najmniej 10 zł**\n' \
-                   ':warning: Po przekroczeniu kwoty 1000 zł mnimalna kwota przebicia wynosi 10 zł'
+                   ':warning: Po przekroczeniu kwoty 500 zł mnimalna kwota przebicia wynosi 10 zł'
             diff = 10
+        if self.data['price'] >= 1000:
+            diff_err_text = ':x: **Podana przez ciebie cena nie jest wyższa od poprzedniej o co najmniej 15 zł**\n' \
+                   ':warning: Po przekroczeniu kwoty 1000 zł mnimalna kwota przebicia wynosi 15 zł'
+            diff = 15
 
         diff_info = ''
         if self.data['price'] < 500 <= new_price:
             diff_info = '\n\n**WOW! Mamy 500 złotych!** :star_struck:\n' \
-                         'Pora wytoczyć ciężkie działa - **od teraz przebijamy o minimum 5 zł!**'
+                         'Pora wytoczyć ciężkie działa - **od teraz przebijamy o minimum 10 zł!**'
         if self.data['price'] < 1000 <= new_price:
             diff_info = '\n\n**WOAH! Mamy 1000 złotych!** :partying_face:\n' \
-                         'Czas na wielką ofensywę - **od teraz przebijamy o minimum 10 zł!**'
+                         'Czas na wielką ofensywę - **od teraz przebijamy o minimum 15 zł!**'
 
         if new_price < self.data['price'] + diff:
             await msg.delete()
