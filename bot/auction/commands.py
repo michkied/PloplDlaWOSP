@@ -61,12 +61,16 @@ class Auction(commands.Cog):
             logger.warning(f"{msg.author.display_name} próbował licytować gdy nie trwała licytacja")
             return
 
-        if new_price - self.data['price'] > 5000:
+        if new_price - self.data['price'] > 3127:
             await self.bot.get_channel(LOG_CHANNEL).send(f'{msg.author.mention} próbował/a podbić cenę '
                                                          f'o {new_price - self.data["price"]}')
             await msg.delete()
             logger.warning(f"{msg.author.display_name} próbował podbić cenę o {new_price - self.data['price']}")
-            return
+            try:
+                await msg.author.send(":x: **Próbowałeś przebić o za dużą wartość.**")
+            except discord.Forbidden:
+                pass
+            return 
         
         if self.data['highest_bidder']:
             diff_err_text = ':x: **Podana przez ciebie cena nie jest wyższa od poprzedniej o co najmniej 5 zł**'
