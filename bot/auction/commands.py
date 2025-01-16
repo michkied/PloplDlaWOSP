@@ -89,10 +89,10 @@ class Auction(commands.Cog):
 
         diff_info = ''
         if self.data['price'] < 500 <= new_price:
-            diff_info = '\n\n**WOW! Mamy 500 złotych!** :star_struck:\n' \
+            diff_info = '\n\n**WOW! Mamy 500 złotych!** :partying_face:\n' \
                          'Pora wytoczyć ciężkie działa - **od teraz przebijamy o minimum 10 zł!**'
         if self.data['price'] < 1000 <= new_price:
-            diff_info = '\n\n**WOAH! Mamy 1000 złotych!** :partying_face:\n' \
+            diff_info = '\n\n**WOAH! Mamy 1000 złotych!** <:omg:1190439027963338853>\n' \
                          'Czas na wielką ofensywę - **od teraz przebijamy o minimum 15 zł!**'
 
         if new_price < self.data['price'] + diff:
@@ -117,6 +117,23 @@ class Auction(commands.Cog):
         await msg.channel.send(f'**{msg.author.mention} podbija cenę do `{new_price} zł`!**{diff_info}')
         logger.info(f'{msg.author.display_name} podbija cenę do {new_price}')
 
+    @commands.slash_command()
+    async def purge(self, ctx, amount: int,):
+        """Usuń podaną ilość wiadomości z kanału"""
+ 
+        if ORGANIZER_ROLE not in list(map(lambda x: x.id, ctx.user.roles)):
+            await ctx.response.send_message(':x: **Nie masz uprawnień do użycia tej komendy!**', ephemeral=True)
+            logger.warning(f"{ctx.user.display_name} próbował rozpocząć licytację")
+            return
+
+        if amount <= 0:
+            await ctx.response.send_message("Można podawać tylko liczby dodatnie", ephemeral=True)
+
+        deleted = await ctx.channel.purge(limit=amount)
+        await self.bot.get_channel(LOG_CHANNEL).send(f'{ctx.author.nick} Usunął/a {len(deleted)} wiadomości')
+        await ctx.response.send_message(':+1:', ephemeral=True)
+        return
+    
     @commands.slash_command()
     async def start(self, ctx, name: str, price: int):
         """Rozpocznij licytację"""
