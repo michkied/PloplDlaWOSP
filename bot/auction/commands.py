@@ -117,22 +117,6 @@ class Auction(commands.Cog):
         await msg.channel.send(f'**{msg.author.mention} podbija cenę do `{new_price} zł`!**{diff_info}')
         logger.info(f'{msg.author.display_name} podbija cenę do {new_price}')
 
-    @commands.slash_command()
-    async def purge(self, ctx, amount: int,):
-        """Usuń podaną ilość wiadomości z kanału"""
- 
-        if ORGANIZER_ROLE not in list(map(lambda x: x.id, ctx.user.roles)):
-            await ctx.response.send_message(':x: **Nie masz uprawnień do użycia tej komendy!**', ephemeral=True)
-            logger.warning(f"{ctx.user.display_name} próbował rozpocząć licytację")
-            return
-
-        if amount <= 0:
-            await ctx.response.send_message("Można podawać tylko liczby dodatnie", ephemeral=True)
-
-        deleted = await ctx.channel.purge(limit=amount)
-        await self.bot.get_channel(LOG_CHANNEL).send(f'{ctx.author.nick} Usunął/a {len(deleted)} wiadomości')
-        await ctx.response.send_message(':+1:', ephemeral=True)
-        return
     
     @commands.slash_command()
     async def start(self, ctx, name: str, price: int):
@@ -355,6 +339,23 @@ class Auction(commands.Cog):
             text = f':warning: **Licytacja została cofnięta do kwoty wywoławczej - `{price} zł`**'
 
         await ctx.response.send_message(text)
+
+    @commands.slash_command()
+    async def purge(self, ctx, amount: int,):
+        """Usuń podaną ilość wiadomości z kanału"""
+ 
+        if ORGANIZER_ROLE not in list(map(lambda x: x.id, ctx.user.roles)):
+            await ctx.response.send_message(':x: **Nie masz uprawnień do użycia tej komendy!**', ephemeral=True)
+            logger.warning(f"{ctx.user.display_name} próbował rozpocząć licytację")
+            return
+
+        if amount <= 0:
+            await ctx.response.send_message("Można podawać tylko liczby dodatnie", ephemeral=True)
+
+        deleted = await ctx.channel.purge(limit=amount)
+        await self.bot.get_channel(LOG_CHANNEL).send(f'{ctx.author.nick} usunął/a {len(deleted)} wiadomości w {ctx.channel.mention}')
+        await ctx.response.send_message(':+1:', ephemeral=True)
+        return
 
     @commands.slash_command()
     async def say(self, ctx, message: str):
