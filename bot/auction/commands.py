@@ -61,35 +61,39 @@ class Auction(commands.Cog):
             logger.warning(f"{msg.author.display_name} próbował licytować gdy nie trwała licytacja")
             return
 
-        if new_price - self.data['price'] > 5000:
+        if new_price - self.data['price'] > 3127:
             await self.bot.get_channel(LOG_CHANNEL).send(f'{msg.author.mention} próbował/a podbić cenę '
                                                          f'o {new_price - self.data["price"]}')
             await msg.delete()
             logger.warning(f"{msg.author.display_name} próbował podbić cenę o {new_price - self.data['price']}")
-            return
+            try:
+                await msg.author.send(":x: **Próbowałeś przebić o za dużą wartość.**")
+            except discord.Forbidden:
+                pass
+            return 
         
         if self.data['highest_bidder']:
-            diff_err_text = ':x: **Podana przez ciebie cena nie jest wyższa od poprzedniej o co najmniej 2 zł**'
-            diff = 2
+            diff_err_text = ':x: **Podana przez ciebie cena nie jest wyższa od poprzedniej o co najmniej 5 zł**'
+            diff = 5
         else:
             diff_err_text = ':x: **Podana przez ciebie cena jest niższa od ceny wywoławczej**'
             diff = 0
         if self.data['price'] >= 500:
-            diff_err_text = ':x: **Podana przez ciebie cena nie jest wyższa od poprzedniej o co najmniej 5 zł**\n' \
-                   ':warning: Po przekroczeniu kwoty 500 zł mnimalna kwota przebicia wynosi 5 zł'
-            diff = 5
-        if self.data['price'] >= 1000:
             diff_err_text = ':x: **Podana przez ciebie cena nie jest wyższa od poprzedniej o co najmniej 10 zł**\n' \
-                   ':warning: Po przekroczeniu kwoty 1000 zł mnimalna kwota przebicia wynosi 10 zł'
+                   ':warning: Po przekroczeniu kwoty 500 zł mnimalna kwota przebicia wynosi 10 zł'
             diff = 10
+        if self.data['price'] >= 1000:
+            diff_err_text = ':x: **Podana przez ciebie cena nie jest wyższa od poprzedniej o co najmniej 15 zł**\n' \
+                   ':warning: Po przekroczeniu kwoty 1000 zł mnimalna kwota przebicia wynosi 15 zł'
+            diff = 15
 
         diff_info = ''
         if self.data['price'] < 500 <= new_price:
-            diff_info = '\n\n**WOW! Mamy 500 złotych!** :star_struck:\n' \
-                         'Pora wytoczyć ciężkie działa - **od teraz przebijamy o minimum 5 zł!**'
+            diff_info = '\n\n**WOW! Mamy 500 złotych!** :partying_face:\n' \
+                         'Pora wytoczyć ciężkie działa - **od teraz przebijamy o minimum 10 zł!**'
         if self.data['price'] < 1000 <= new_price:
-            diff_info = '\n\n**WOAH! Mamy 1000 złotych!** :partying_face:\n' \
-                         'Czas na wielką ofensywę - **od teraz przebijamy o minimum 10 zł!**'
+            diff_info = '\n\n**WOAH! Mamy 1000 złotych!** <:omg:1190439027963338853>\n' \
+                         'Czas na wielką ofensywę - **od teraz przebijamy o minimum 15 zł!**'
 
         if new_price < self.data['price'] + diff:
             await msg.delete()
@@ -113,6 +117,7 @@ class Auction(commands.Cog):
         await msg.channel.send(f'**{msg.author.mention} podbija cenę do `{new_price} zł`!**{diff_info}')
         logger.info(f'{msg.author.display_name} podbija cenę do {new_price}')
 
+    
     @commands.slash_command()
     async def start(self, ctx, name: str, price: int):
         """Rozpocznij licytację"""
@@ -334,6 +339,23 @@ class Auction(commands.Cog):
             text = f':warning: **Licytacja została cofnięta do kwoty wywoławczej - `{price} zł`**'
 
         await ctx.response.send_message(text)
+
+    @commands.slash_command()
+    async def purge(self, ctx, amount: int,):
+        """Usuń podaną ilość wiadomości z kanału"""
+ 
+        if ORGANIZER_ROLE not in list(map(lambda x: x.id, ctx.user.roles)):
+            await ctx.response.send_message(':x: **Nie masz uprawnień do użycia tej komendy!**', ephemeral=True)
+            logger.warning(f"{ctx.user.display_name} próbował rozpocząć licytację")
+            return
+
+        if amount <= 0:
+            await ctx.response.send_message("Można podawać tylko liczby dodatnie", ephemeral=True)
+
+        deleted = await ctx.channel.purge(limit=amount)
+        await self.bot.get_channel(LOG_CHANNEL).send(f'{ctx.author.nick} usunął/a {len(deleted)} wiadomości w {ctx.channel.mention}')
+        await ctx.response.send_message(':+1:', ephemeral=True)
+        return
 
     @commands.slash_command()
     async def say(self, ctx, message: str):
