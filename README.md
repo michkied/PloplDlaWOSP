@@ -14,6 +14,24 @@ Discord bot that managed IV, V & VI PLOPŁ Autions for WOŚP (Polish charity).
   
 **IV, V & VI PLOPŁ Autions for WOŚP collected over 56 000 PLN for Wielka Orkiestra Świątecznej Pomocy!**
 
+## Setup
+Windows:
+```sh
+py -m venv .venv
+.\venv\Scripts\activate
+pip install -r requirements.txt
+```
+Linux:
+```sh
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+## Startup
+```sh
+python main.py
+```
+
 ▬▬▬▬▬▬▬▬▬
 
 Bot obsługujący IV, V i VI Wielką Licytację PLOPŁ dla WOŚP.
