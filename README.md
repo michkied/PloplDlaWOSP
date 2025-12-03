@@ -28,6 +28,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 ## Startup
+To select between Verification and Auctrion modes, change the variable in main.py. To run the script:
 ```sh
 python main.py
 ```
