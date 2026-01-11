@@ -61,7 +61,7 @@ class Auction(commands.Cog):
             logger.warning(f"{msg.author.display_name} próbował licytować gdy nie trwała licytacja")
             return
 
-        if new_price - self.data['price'] > 3127:
+        if new_price - self.data['price'] > 5000:
             await self.bot.get_channel(LOG_CHANNEL).send(f'{msg.author.mention} próbował/a podbić cenę '
                                                          f'o {new_price - self.data["price"]}')
             await msg.delete()
@@ -83,9 +83,9 @@ class Auction(commands.Cog):
                    ':warning: Po przekroczeniu kwoty 500 zł mnimalna kwota przebicia wynosi 10 zł'
             diff = 10
         if self.data['price'] >= 1000:
-            diff_err_text = ':x: **Podana przez ciebie cena nie jest wyższa od poprzedniej o co najmniej 15 zł**\n' \
-                   ':warning: Po przekroczeniu kwoty 1000 zł mnimalna kwota przebicia wynosi 15 zł'
-            diff = 15
+            diff_err_text = ':x: **Podana przez ciebie cena nie jest wyższa od poprzedniej o co najmniej 30 zł**\n' \
+                   ':warning: Po przekroczeniu kwoty 1000 zł mnimalna kwota przebicia wynosi 30 zł'
+            diff = 30
 
         diff_info = ''
         if self.data['price'] < 500 <= new_price:
@@ -93,7 +93,7 @@ class Auction(commands.Cog):
                          'Pora wytoczyć ciężkie działa - **od teraz przebijamy o minimum 10 zł!**'
         if self.data['price'] < 1000 <= new_price:
             diff_info = '\n\n**WOAH! Mamy 1000 złotych!** <:omg:1190439027963338853>\n' \
-                         'Czas na wielką ofensywę - **od teraz przebijamy o minimum 15 zł!**'
+                         'Czas na wielką ofensywę - **od teraz przebijamy o minimum 30 zł!**'
 
         if new_price < self.data['price'] + diff:
             await msg.delete()
@@ -174,17 +174,17 @@ class Auction(commands.Cog):
             duration -= 1
 
             if duration == 20:
-                await ctx.interaction.edit_original_message(content=f"**Do końca licytacji zostało {duration} sekund!**")
+                await ctx.interaction.edit_original_response(content=f"**Do końca licytacji zostało {duration} sekund!**")
             elif duration == 15:
-                await ctx.interaction.edit_original_message(content=f"**Do końca licytacji zostało {duration} sekund!**")
+                await ctx.interaction.edit_original_response(content=f"**Do końca licytacji zostało {duration} sekund!**")
             elif duration == 10:
-                await ctx.interaction.edit_original_message(content=f"**Do końca licytacji zostało 10 sekund!**")
+                await ctx.interaction.edit_original_response(content=f"**Do końca licytacji zostało 10 sekund!**")
             elif 5 <= duration <= 10:
-                await ctx.interaction.edit_original_message(content=f"**Do końca licytacji zostało {duration} sekund!**")
+                await ctx.interaction.edit_original_response(content=f"**Do końca licytacji zostało {duration} sekund!**")
             elif 2 <= duration <= 4:
-                await ctx.interaction.edit_original_message(content=f"**Do końca licytacji zostały {duration} sekundy!**")
+                await ctx.interaction.edit_original_response(content=f"**Do końca licytacji zostały {duration} sekundy!**")
             elif duration == 1:
-                await ctx.interaction.edit_original_message(content=f"**Do końca licytacji została {duration} sekunda!**")
+                await ctx.interaction.edit_original_response(content=f"**Do końca licytacji została {duration} sekunda!**")
             elif duration == 0:
                 break
             if self.stop_timer == True:
@@ -196,14 +196,14 @@ class Auction(commands.Cog):
         await ctx.channel.set_permissions(ctx.guild.default_role, overwrite=discord.PermissionOverwrite(send_messages=False))
         if self.data['highest_bidder'] != 0:
             highest_bidder = ctx.guild.get_member(self.data['highest_bidder'])
-            await ctx.interaction.edit_original_message(content=f"▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n\n:tada: **Licytacja zakończyła się!** :tada:\n"
+            await ctx.interaction.edit_original_response(content=f"▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n\n:tada: **Licytacja zakończyła się!** :tada:\n"
                                             f"{highest_bidder.mention} "
                                             f"kupił(a) `{self.data['name']}` za `{self.data['price']} zł`!")
             self.data['last_bid_msg'] = f"Sprzedane za {self.data['price']} zł!"
             logger.info(f"Licytacja zakończyła się: {highest_bidder.display_name} "
                         f"kupił {self.data['name']} za {self.data['price']}")
         else:
-            await ctx.interaction.edit_original_message(content=
+            await ctx.interaction.edit_original_response(content=
                 f"▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n\n**Licytacja zakończyła się!**\nNikt nie wylicytował przedmiotu")
             self.data['last_bid_msg'] = 'Licytacja zakończona! Nikt nie wylicytował przedmiotu'
             logger.info("Licytacja zakończyła się, nikt nie wylicytował przedmiotu")
