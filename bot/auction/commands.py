@@ -11,6 +11,7 @@ class Auction(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.stop_timer = False
+        self.lock = asyncio.Lock()
         with open(os.path.join(path, 'data.json'), 'r+', encoding="UTF-8") as f:
             self.data = json.loads(f.read())[0]
         with open(os.path.join(path, 'history.json'), 'r+', encoding="UTF-8") as f:
@@ -37,6 +38,16 @@ class Auction(commands.Cog):
         with open(os.path.join(path, 'history.json'), "w+", encoding='UTF-8') as f:
             f.write(json.dumps(self.history, indent=4))
 
+    async def bid_cleanup(self):
+        await asyncio.sleep(20)
+        async with self.lock:
+            if self.data['running']:
+                return
+            self.data['last_bid_msg'] = ''
+            self.data['name'] = ''
+            self.data['price'] = 0
+            await self.bot.loop.run_in_executor(None, self.update_files, self.data)
+
     @commands.Cog.listener()
     async def on_message(self, msg):
 
@@ -53,69 +64,70 @@ class Auction(commands.Cog):
                 logger.warning(f"{msg.author.display_name} napisał {msg.content}")
             return
 
-        if not self.data['running']:
-            if is_moderator:
+        async with self.lock:
+            if not self.data['running']:
+                if is_moderator:
+                    return
+                await msg.delete()
+                await msg.channel.send(':x: **Aktualnie nie trwa licytacja!**', delete_after=3)
+                logger.warning(f"{msg.author.display_name} próbował licytować gdy nie trwała licytacja")
                 return
-            await msg.delete()
-            await msg.channel.send(':x: **Aktualnie nie trwa licytacja!**', delete_after=3)
-            logger.warning(f"{msg.author.display_name} próbował licytować gdy nie trwała licytacja")
-            return
 
-        if new_price - self.data['price'] > 3127:
-            await self.bot.get_channel(LOG_CHANNEL).send(f'{msg.author.mention} próbował/a podbić cenę '
-                                                         f'o {new_price - self.data["price"]}')
-            await msg.delete()
-            logger.warning(f"{msg.author.display_name} próbował podbić cenę o {new_price - self.data['price']}")
-            try:
-                await msg.author.send(":x: **Próbowałeś przebić o za dużą wartość.**")
-            except discord.Forbidden:
-                pass
-            return 
-        
-        if self.data['highest_bidder']:
-            diff_err_text = ':x: **Podana przez ciebie cena nie jest wyższa od poprzedniej o co najmniej 5 zł**'
-            diff = 5
-        else:
-            diff_err_text = ':x: **Podana przez ciebie cena jest niższa od ceny wywoławczej**'
-            diff = 0
-        if self.data['price'] >= 500:
-            diff_err_text = ':x: **Podana przez ciebie cena nie jest wyższa od poprzedniej o co najmniej 10 zł**\n' \
-                   ':warning: Po przekroczeniu kwoty 500 zł mnimalna kwota przebicia wynosi 10 zł'
-            diff = 10
-        if self.data['price'] >= 1000:
-            diff_err_text = ':x: **Podana przez ciebie cena nie jest wyższa od poprzedniej o co najmniej 15 zł**\n' \
-                   ':warning: Po przekroczeniu kwoty 1000 zł mnimalna kwota przebicia wynosi 15 zł'
-            diff = 15
+            if new_price - self.data['price'] > 3127:
+                await self.bot.get_channel(LOG_CHANNEL).send(f'{msg.author.mention} próbował/a podbić cenę '
+                                                             f'o {new_price - self.data["price"]}')
+                await msg.delete()
+                logger.warning(f"{msg.author.display_name} próbował podbić cenę o {new_price - self.data['price']}")
+                try:
+                    await msg.author.send(":x: **Próbowałeś przebić o za dużą wartość.**")
+                except discord.Forbidden:
+                    pass
+                return
 
-        diff_info = ''
-        if self.data['price'] < 500 <= new_price:
-            diff_info = '\n\n**WOW! Mamy 500 złotych!** :partying_face:\n' \
-                         'Pora wytoczyć ciężkie działa - **od teraz przebijamy o minimum 10 zł!**'
-        if self.data['price'] < 1000 <= new_price:
-            diff_info = '\n\n**WOAH! Mamy 1000 złotych!** <:omg:1190439027963338853>\n' \
-                         'Czas na wielką ofensywę - **od teraz przebijamy o minimum 15 zł!**'
+            if self.data['highest_bidder']:
+                diff_err_text = ':x: **Podana przez ciebie cena nie jest wyższa od poprzedniej o co najmniej 5 zł**'
+                diff = 5
+            else:
+                diff_err_text = ':x: **Podana przez ciebie cena jest niższa od ceny wywoławczej**'
+                diff = 0
+            if self.data['price'] >= 500:
+                diff_err_text = ':x: **Podana przez ciebie cena nie jest wyższa od poprzedniej o co najmniej 10 zł**\n' \
+                       ':warning: Po przekroczeniu kwoty 500 zł mnimalna kwota przebicia wynosi 10 zł'
+                diff = 10
+            if self.data['price'] >= 1000:
+                diff_err_text = ':x: **Podana przez ciebie cena nie jest wyższa od poprzedniej o co najmniej 15 zł**\n' \
+                       ':warning: Po przekroczeniu kwoty 1000 zł mnimalna kwota przebicia wynosi 15 zł'
+                diff = 15
 
-        if new_price < self.data['price'] + diff:
-            await msg.delete()
-            logger.warning(f"{msg.author.display_name} próbował przebić o {new_price}")
-            try:
-                await msg.author.send(diff_err_text)
-            except discord.Forbidden:
-                pass
-            return
+            diff_info = ''
+            if self.data['price'] < 500 <= new_price:
+                diff_info = '\n\n**WOW! Mamy 500 złotych!** :partying_face:\n' \
+                             'Pora wytoczyć ciężkie działa - **od teraz przebijamy o minimum 10 zł!**'
+            if self.data['price'] < 1000 <= new_price:
+                diff_info = '\n\n**WOAH! Mamy 1000 złotych!** <:omg:1190439027963338853>\n' \
+                             'Czas na wielką ofensywę - **od teraz przebijamy o minimum 15 zł!**'
 
-        if self.data['price'] != self.data['starting_price']:
-            self.data['sum'] = self.data['sum'] - self.data['price'] + new_price
-        else:
-            self.data['sum'] = self.data['sum'] + new_price
-        self.data['price'] = new_price
-        self.data['highest_bidder'] = msg.author.id
-        self.data['last_bid_msg'] = f'{msg.author.display_name} podbija do {new_price} zł!'
-        self.stop_timer = True
+            if new_price < self.data['price'] + diff:
+                await msg.delete()
+                logger.warning(f"{msg.author.display_name} próbował przebić o {new_price}")
+                try:
+                    await msg.author.send(diff_err_text)
+                except discord.Forbidden:
+                    pass
+                return
 
-        await self.bot.loop.run_in_executor(None, self.update_files, self.data)
-        await msg.channel.send(f'**{msg.author.mention} podbija cenę do `{new_price} zł`!**{diff_info}')
-        logger.info(f'{msg.author.display_name} podbija cenę do {new_price}')
+            if self.data['price'] != self.data['starting_price']:
+                self.data['sum'] = self.data['sum'] - self.data['price'] + new_price
+            else:
+                self.data['sum'] = self.data['sum'] + new_price
+            self.data['price'] = new_price
+            self.data['highest_bidder'] = msg.author.id
+            self.data['last_bid_msg'] = f'{msg.author.display_name} podbija do {new_price} zł!'
+            self.stop_timer = True
+
+            await self.bot.loop.run_in_executor(None, self.update_files, self.data)
+            await msg.channel.send(f'**{msg.author.mention} podbija cenę do `{new_price} zł`!**{diff_info}')
+            logger.info(f'{msg.author.display_name} podbija cenę do {new_price}')
 
     
     @commands.slash_command()
@@ -132,22 +144,23 @@ class Auction(commands.Cog):
             logger.warning(f"{ctx.user.display_name} próbował rozpocząć licytację na złym kanale")
             return
 
-        if self.data['running']:
-            await ctx.response.send_message(':x: **Licytacja już trwa!**', ephemeral=True)
-            logger.warning(f"{ctx.user.display_name} próbował rozpocząć licytację gdy inna jeszcze trwała")
-            return
+        async with self.lock:
+            if self.data['running']:
+                await ctx.response.send_message(':x: **Licytacja już trwa!**', ephemeral=True)
+                logger.warning(f"{ctx.user.display_name} próbował rozpocząć licytację gdy inna jeszcze trwała")
+                return
 
-        self.data['price'] = price
-        self.data['name'] = name
-        self.data['running'] = True
-        self.data['highest_bidder'] = 0
-        self.data['starting_price'] = price
-        self.data['last_bid_msg'] = f'Licytacja rozpoczęta! Cena wywoławcza: {price} zł'
-        await self.bot.loop.run_in_executor(None, self.clear_history)
-        await self.bot.loop.run_in_executor(None, self.update_files, self.data)
-        await ctx.channel.set_permissions(ctx.guild.default_role, overwrite=discord.PermissionOverwrite(send_messages=True))
-        await ctx.response.send_message(f':moneybag: **Licytacja `{name}` rozpoczęła się!**\nCena wywoławcza: `{price} zł`')
-        logger.info("Start licytacji: *" + name + "* Cena:" + str(price))
+            self.data['price'] = price
+            self.data['name'] = name
+            self.data['running'] = True
+            self.data['highest_bidder'] = 0
+            self.data['starting_price'] = price
+            self.data['last_bid_msg'] = f'Licytacja rozpoczęta! Cena wywoławcza: {price} zł'
+            await self.bot.loop.run_in_executor(None, self.clear_history)
+            await self.bot.loop.run_in_executor(None, self.update_files, self.data)
+            await ctx.channel.set_permissions(ctx.guild.default_role, overwrite=discord.PermissionOverwrite(send_messages=True))
+            await ctx.response.send_message(f':moneybag: **Licytacja `{name}` rozpoczęła się!**\nCena wywoławcza: `{price} zł`')
+            logger.info("Start licytacji: *" + name + "* Cena:" + str(price))
 
     @commands.slash_command()
     async def end(self, ctx, duration: discord.commands.Option(int, default=20)):
@@ -163,57 +176,52 @@ class Auction(commands.Cog):
             logger.warning(f"{ctx.user.display_name} próbował zakończyć licytację na złym kanale")
             return
 
-        if not self.data['running']:
-            await ctx.response.send_message(':x: **Nie trwa żadna licytacja!**', ephemeral=True)
-            logger.warning(f"{ctx.user.display_name} próbował zakończyć licytację gdy żadna nie trwała")
-            return
-
-        await ctx.response.send_message(f"**Do końca licytacji zostało {duration} sekund!**")
-        self.stop_timer = False
-        while True:
-            duration -= 1
-
-            if duration == 20:
-                await ctx.interaction.edit_original_message(content=f"**Do końca licytacji zostało {duration} sekund!**")
-            elif duration == 15:
-                await ctx.interaction.edit_original_message(content=f"**Do końca licytacji zostało {duration} sekund!**")
-            elif duration == 10:
-                await ctx.interaction.edit_original_message(content=f"**Do końca licytacji zostało 10 sekund!**")
-            elif 5 <= duration <= 10:
-                await ctx.interaction.edit_original_message(content=f"**Do końca licytacji zostało {duration} sekund!**")
-            elif 2 <= duration <= 4:
-                await ctx.interaction.edit_original_message(content=f"**Do końca licytacji zostały {duration} sekundy!**")
-            elif duration == 1:
-                await ctx.interaction.edit_original_message(content=f"**Do końca licytacji została {duration} sekunda!**")
-            elif duration == 0:
-                break
-            if self.stop_timer == True:
-                await ctx.interaction.delete_original_message()
+        async with self.lock:
+            if not self.data['running']:
+                await ctx.response.send_message(':x: **Nie trwa żadna licytacja!**', ephemeral=True)
+                logger.warning(f"{ctx.user.display_name} próbował zakończyć licytację gdy żadna nie trwała")
                 return
 
-            await asyncio.sleep(1)
-        self.data['running'] = False
-        await ctx.channel.set_permissions(ctx.guild.default_role, overwrite=discord.PermissionOverwrite(send_messages=False))
-        if self.data['highest_bidder'] != 0:
-            highest_bidder = ctx.guild.get_member(self.data['highest_bidder'])
-            await ctx.interaction.edit_original_message(content=f"▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n\n:tada: **Licytacja zakończyła się!** :tada:\n"
-                                            f"{highest_bidder.mention} "
-                                            f"kupił(a) `{self.data['name']}` za `{self.data['price']} zł`!")
-            self.data['last_bid_msg'] = f"Sprzedane za {self.data['price']} zł!"
-            logger.info(f"Licytacja zakończyła się: {highest_bidder.display_name} "
-                        f"kupił {self.data['name']} za {self.data['price']}")
-        else:
-            await ctx.interaction.edit_original_message(content=
-                f"▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n\n**Licytacja zakończyła się!**\nNikt nie wylicytował przedmiotu")
-            self.data['last_bid_msg'] = 'Licytacja zakończona! Nikt nie wylicytował przedmiotu'
-            logger.info("Licytacja zakończyła się, nikt nie wylicytował przedmiotu")
+            await ctx.response.send_message(f"**Do końca licytacji zostało {duration} sekund!**")
+            self.stop_timer = False
 
-        await self.bot.loop.run_in_executor(None, self.update_files, self.data)
-        await asyncio.sleep(20)
-        self.data['last_bid_msg'] = ''
-        self.data['name'] = ''
-        self.data['price'] = 0
-        await self.bot.loop.run_in_executor(None, self.update_files, self.data)
+        while True:
+            await asyncio.sleep(1)
+            duration -= 1
+            async with self.lock:
+                if self.stop_timer:
+                    await ctx.interaction.delete_original_response()
+                    return
+
+                if 5 <= duration:
+                    await ctx.interaction.edit_original_response(content=f"**Do końca licytacji zostało {duration} sekund!**")
+                elif 2 <= duration <= 4:
+                    await ctx.interaction.edit_original_response(content=f"**Do końca licytacji zostały {duration} sekundy!**")
+                elif duration == 1:
+                    await ctx.interaction.edit_original_response(content=f"**Do końca licytacji została {duration} sekunda!**")
+                elif duration == 0:
+                    self.data['running'] = False
+                    break
+
+        async with self.lock:
+            await ctx.channel.set_permissions(ctx.guild.default_role, overwrite=discord.PermissionOverwrite(send_messages=False))
+            if self.data['highest_bidder'] != 0:
+                highest_bidder = ctx.guild.get_member(self.data['highest_bidder'])
+                await ctx.interaction.edit_original_response(content=f"▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n\n:tada: **Licytacja zakończyła się!** :tada:\n"
+                                                f"{highest_bidder.mention} "
+                                                f"kupił(a) `{self.data['name']}` za `{self.data['price']} zł`!")
+                self.data['last_bid_msg'] = f"Sprzedane za {self.data['price']} zł!"
+                logger.info(f"Licytacja zakończyła się: {highest_bidder.display_name} "
+                            f"kupił {self.data['name']} za {self.data['price']}")
+            else:
+                await ctx.interaction.edit_original_response(content=
+                    f"▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n\n**Licytacja zakończyła się!**\nNikt nie wylicytował przedmiotu")
+                self.data['last_bid_msg'] = 'Licytacja zakończona! Nikt nie wylicytował przedmiotu'
+                logger.info("Licytacja zakończyła się, nikt nie wylicytował przedmiotu")
+
+            await self.bot.loop.run_in_executor(None, self.update_files, self.data)
+
+        await self.bid_cleanup()
 
     @commands.slash_command()
     async def forceend(self, ctx):
@@ -229,34 +237,32 @@ class Auction(commands.Cog):
             logger.warning(f"{ctx.user.display_name} próbował zakończyć licytację na złym kanale")
             return
 
-        if not self.data['running']:
-            await ctx.response.send_message(':x: **Nie trwa żadna licytacja!**', ephemeral=True)
-            logger.warning(f"{ctx.user.display_name} próbował zakończyć licytację gdy żadna nie trwała")
-            return
+        async with self.lock:
+            if not self.data['running']:
+                await ctx.response.send_message(':x: **Nie trwa żadna licytacja!**', ephemeral=True)
+                logger.warning(f"{ctx.user.display_name} próbował zakończyć licytację gdy żadna nie trwała")
+                return
 
-        self.stop_timer = True
-        self.data['running'] = False
-        await ctx.channel.set_permissions(ctx.guild.default_role, overwrite=discord.PermissionOverwrite(send_messages=False))
-        if self.data['highest_bidder'] != 0:
-            highest_bidder = ctx.guild.get_member(self.data['highest_bidder'])
-            await ctx.response.send_message(f"▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n\n:tada: **Licytacja zakończyła się!** :tada:\n"
-                                            f"{highest_bidder.mention} "
-                                            f"kupił(a) `{self.data['name']}` za `{self.data['price']} zł`!")
-            self.data['last_bid_msg'] = f"Sprzedane za {self.data['price']} zł!"
-            logger.info(f"Licytacja zakończyła się: {highest_bidder.display_name} "
-                        f"kupił {self.data['name']} za {self.data['price']}")
-        else:
-            await ctx.response.send_message(
-                f"▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n\n**Licytacja zakończyła się!**\nNikt nie wylicytował przedmiotu")
-            self.data['last_bid_msg'] = 'Licytacja zakończona! Nikt nie wylicytował przedmiotu'
-            logger.info("Licytacja zakończyła się, nikt nie wylicytował przedmiotu")
+            self.stop_timer = True
+            self.data['running'] = False
+            await ctx.channel.set_permissions(ctx.guild.default_role, overwrite=discord.PermissionOverwrite(send_messages=False))
+            if self.data['highest_bidder'] != 0:
+                highest_bidder = ctx.guild.get_member(self.data['highest_bidder'])
+                await ctx.response.send_message(f"▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n\n:tada: **Licytacja zakończyła się!** :tada:\n"
+                                                f"{highest_bidder.mention} "
+                                                f"kupił(a) `{self.data['name']}` za `{self.data['price']} zł`!")
+                self.data['last_bid_msg'] = f"Sprzedane za {self.data['price']} zł!"
+                logger.info(f"Licytacja zakończyła się: {highest_bidder.display_name} "
+                            f"kupił {self.data['name']} za {self.data['price']}")
+            else:
+                await ctx.response.send_message(
+                    f"▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n\n**Licytacja zakończyła się!**\nNikt nie wylicytował przedmiotu")
+                self.data['last_bid_msg'] = 'Licytacja zakończona! Nikt nie wylicytował przedmiotu'
+                logger.info("Licytacja zakończyła się, nikt nie wylicytował przedmiotu")
 
-        await self.bot.loop.run_in_executor(None, self.update_files, self.data)
-        await asyncio.sleep(20)
-        self.data['last_bid_msg'] = ''
-        self.data['name'] = ''
-        self.data['price'] = 0
-        await self.bot.loop.run_in_executor(None, self.update_files, self.data)
+            await self.bot.loop.run_in_executor(None, self.update_files, self.data)
+
+        await self.bid_cleanup()
 
     @commands.slash_command()
     async def pause(self, ctx):
@@ -270,14 +276,15 @@ class Auction(commands.Cog):
             logger.warning(f"{ctx.user.display_name} próbował wstrzymać licytację na złym kanale")
             return
 
-        if not self.data['running']:
-            await ctx.response.send_message(':x: **Nie trwa żadna licytacja!**', ephemeral=True)
-            logger.warning(f"{ctx.user.display_name} próbował wstrzymać licytację gdy żadna nie trwała")
-            return
+        async with self.lock:
+            if not self.data['running']:
+                await ctx.response.send_message(':x: **Nie trwa żadna licytacja!**', ephemeral=True)
+                logger.warning(f"{ctx.user.display_name} próbował wstrzymać licytację gdy żadna nie trwała")
+                return
 
-        self.stop_timer = True
-        await ctx.channel.set_permissions(ctx.guild.default_role, overwrite=discord.PermissionOverwrite(send_messages=False))
-        await ctx.response.send_message(f":warning: **Licytacja wstrzymana!**")
+            self.stop_timer = True
+            await ctx.channel.set_permissions(ctx.guild.default_role, overwrite=discord.PermissionOverwrite(send_messages=False))
+            await ctx.response.send_message(f":warning: **Licytacja wstrzymana!**")
 
     @commands.slash_command()
     async def unpause(self, ctx):
@@ -291,13 +298,14 @@ class Auction(commands.Cog):
             logger.warning(f"{ctx.user.display_name} próbował wznowić licytację na złym kanale")
             return
 
-        if not self.data['running']:
-            await ctx.response.send_message(':x: **Nie trwa żadna licytacja!**', ephemeral=True)
-            logger.warning(f"{ctx.user.display_name} próbował wznowić licytację gdy żadna nie trwała")
-            return
+        async with self.lock:
+            if not self.data['running']:
+                await ctx.response.send_message(':x: **Nie trwa żadna licytacja!**', ephemeral=True)
+                logger.warning(f"{ctx.user.display_name} próbował wznowić licytację gdy żadna nie trwała")
+                return
 
-        await ctx.channel.set_permissions(ctx.guild.default_role, overwrite=discord.PermissionOverwrite(send_messages=True))
-        await ctx.response.send_message(f":tada: **Licytacja wznowiona!**")
+            await ctx.channel.set_permissions(ctx.guild.default_role, overwrite=discord.PermissionOverwrite(send_messages=True))
+            await ctx.response.send_message(f":tada: **Licytacja wznowiona!**")
 
     @commands.slash_command()
     async def revert(self, ctx,
@@ -315,30 +323,31 @@ class Auction(commands.Cog):
             logger.warning(f"{ctx.user.display_name} próbował cofnąć licytację na złym kanale")
             return
 
-        if not self.data['running']:
-            await ctx.response.send_message(':x: **Nie trwa żadna licytacja!**', ephemeral=True)
-            logger.warning(f"{ctx.user.display_name} próbował cofnąć licytację gdy żadna nie trwała")
-            return
+        async with self.lock:
+            if not self.data['running']:
+                await ctx.response.send_message(':x: **Nie trwa żadna licytacja!**', ephemeral=True)
+                logger.warning(f"{ctx.user.display_name} próbował cofnąć licytację gdy żadna nie trwała")
+                return
 
-        to_del = []
-        for bid in self.history:
-            if bid > price:
-                to_del.append(bid)
-        for bid in to_del:
-            self.history.pop(bid)
+            to_del = []
+            for bid in self.history:
+                if bid > price:
+                    to_del.append(bid)
+            for bid in to_del:
+                self.history.pop(bid)
 
-        self.data['price'] = price
-        self.data['highest_bidder'] = self.history[price]['highest_bidder']
-        self.data['sum'] = self.history[price]['sum']
-        self.data['last_bid_msg'] = self.history[price]['last_bid_msg']
-        await self.bot.loop.run_in_executor(None, self.update_files, self.data)
-        if self.data['highest_bidder'] != 0:
-            text = f':warning: **Licytacja została cofnięta do wcześniejszego stanu**\n' \
-                   f'Aktualną kwotą jest `{price} zł` od **<@{self.data["highest_bidder"]}>**'
-        else:
-            text = f':warning: **Licytacja została cofnięta do kwoty wywoławczej - `{price} zł`**'
+            self.data['price'] = price
+            self.data['highest_bidder'] = self.history[price]['highest_bidder']
+            self.data['sum'] = self.history[price]['sum']
+            self.data['last_bid_msg'] = self.history[price]['last_bid_msg']
+            await self.bot.loop.run_in_executor(None, self.update_files, self.data)
+            if self.data['highest_bidder'] != 0:
+                text = f':warning: **Licytacja została cofnięta do wcześniejszego stanu**\n' \
+                       f'Aktualną kwotą jest `{price} zł` od **<@{self.data["highest_bidder"]}>**'
+            else:
+                text = f':warning: **Licytacja została cofnięta do kwoty wywoławczej - `{price} zł`**'
 
-        await ctx.response.send_message(text)
+            await ctx.response.send_message(text)
 
     @commands.slash_command()
     async def purge(self, ctx, amount: int,):
@@ -367,4 +376,4 @@ class Auction(commands.Cog):
 
         await ctx.channel.send(message)
         await ctx.response.send_message("Wysłano.", ephemeral=True)
-        await ctx.interaction.delete_original_message()
+        await ctx.interaction.delete_original_response()
