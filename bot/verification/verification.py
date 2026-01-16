@@ -56,7 +56,7 @@ class Verification(commands.Cog):
 
         await ctx.send(file=discord.File(os.path.join(path, f'img.{extension}')))
         text = ('# Siema!\n'
-                '**Witaj w systemie weryfikacji uczestników VII Wielkiej Licytacji PLOPŁ dla WOŚP!**\n'
+                '**Witaj w systemie weryfikacji uczestników VIII Wielkiej Licytacji PLOPŁ dla WOŚP!**\n'
                 'Cieszymy się, że grasz z nami! :tada:\n'
                 '### Aby się zweryfikować, wybierz swoją kategorię wciskając odpowiedni przycisk:')
         await ctx.send(text, view=view)
